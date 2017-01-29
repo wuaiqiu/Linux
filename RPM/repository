@@ -4,7 +4,7 @@
 
 	mkdir  /tmp/yum
 
-	cp  /mnt/Packages  /tmp/yum  -rf
+	cp  /mnt/Packages/*  /tmp/yum  -rf
 
 2.安装createrepo软件
 	
@@ -12,7 +12,16 @@
 
 3.运行createrepo命令
 
-	createrepo -V
+	createrepo -v  /tmp/yum
 
+4.指定分组信息
 
-	
+	createrepo -g /mnt/repodata/..comps.xml /tmp/yum
+
+5.配置yum源(/etc/yum.repos.d/*.repo)
+
+		name=This is a local repository   			#yum源的描述
+		baseurl=file:///tmp/yum/				#yum源的位置
+		enabled=1						#yum源是否启用
+		gpgcheck=1						#yum源是否校验
+		gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-6 	#yum源校验位置	
