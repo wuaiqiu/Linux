@@ -1,0 +1,108 @@
+			ftp   ----File Transfer Protocol
+
+1.安装服务端vsftpd(very secure ftp daemon)
+
+2.安装客户端ftp
+
+3.ftp命令
+
+	ftp  192.168.43.200     #登入ftp服务器
+	
+	ftp下的有关命令
+		
+		ls 		#列出ftp目录下的文件    
+		cd 		#切换ftp目录   
+		put  mput 	#上传
+	        get  mget  	#下载
+		bye             #退出
+
+4.匿名用户登入ftp
+
+	/etc/vsftpd/vsftpd.conf
+		
+		anonymous_enable=YES			#启动匿名用户
+		anon_upload_enable=YES			#匿名用户可上传
+		anon_mkdir_write_enable=YES		#匿名用户可创建文件
+
+	修改/var/ftp/pub 的权限 
+
+		chmod 777 /var/ftp/pub
+
+	匿名用户 ftp(anonymous)  密码空
+
+5.系统用户登入ftp
+
+	/etc/vsftpd/vsftpd.conf
+
+		local_enable=YES		#启动本地用户
+		write_enable=YES		#本地用户可写
+		local_umask=022			#本地用户umask码
+
+	添加系统用户
+
+		useradd  -d /var/ftp/Lee -g ftp -s /sbin/nologin Lee
+		passwd Lee
+
+6.虚拟用户登入ftp
+	
+	/etc/vsftpd/vsftpd.conf
+		
+		local_enable=YES			#系统用户启用登入
+		guest_enable=YES			#启动虚拟用户
+		guest_username=Lee			#虚拟用户所使用的系统用户
+		user_config_dir=/etc/vsftp/vuser_conf	#虚拟用户的配置文件夹
+		pam_service_name=vsftpd			#虚拟用户的验证
+	
+	安装db4-utils
+	
+	创建文件/etc/vsftpd/vuser.txt
+
+		aaa  #奇数行为用户名
+		123  #偶数行为密码
+
+	生成vuser.db数据库
+
+		db_load  -T -t hash -f /etc/vsftpd/vuser.txt  /etc/vsftpd/vuser.db
+
+	修改/etc/pam.d/vsftpd文件，注释以前的语句
+
+		auth       required     /lib64/security/pam_userdb.so   db=/etc/vsftpd/vsftpduser
+		account    required     /lib64/security/pam_userdb.so   db=/etc/vsftpd/vsftpduser
+	
+	创建/etc/vsftpd/vuser_conf目录，以及aaa配置文件
+		
+		local_root=/var/ftp/Lee   #虚拟用户家目录
+		write_enable=YES
+		download_enable=YES
+		local_umask=022
+		
+		
+
+7.其他功能
+
+	/etc/vsftpd/vsftpd.conf
+
+		(1)启用日志
+			xferlog_enable=YES			#是否启动日志
+			xferlog_file=/var/log/xferlog		#日志文件的存放位置
+			xferlog_std_format=YES			#日志格式
+
+		(2)欢迎信息
+			dirmessage_enable=YES    		#在每个用户的家目录下 /var/ftp/Lee/.message
+		
+		(3)锁定用户于家目录
+			chroot_local_user=YES			#全局锁定
+
+			chroot_list_enable=YES			#列表锁定
+			chroot_list_file=/etc/vsftpd/chroot_list#列表位置
+
+		(4)限制用户登入ftp
+			pam_service_name=vsftpd 		#此/etc/vsftp/vsftpd文件的用户不能登入
+			
+			userlist_enable=YES
+			userlist_deny=NO  			#此/etc/vsftp/user_list文件的用户能登入
+			userlist_deny=YES			#此/etc/vsftp/user_list文件的用户不能登入
+		
+		(5)限制连接数
+			max_per_ip=20		#每个ip最大连接数
+			max_clients=10		#最大链接数
