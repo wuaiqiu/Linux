@@ -1,0 +1,19 @@
+		tarball
+
+1.安装gcc编译软件
+
+	yum install gcc
+
+2.软件配置
+
+	./configure  --prefix=/usr/local/apache2  #定义安装路径
+
+3.编译
+
+	make    		 #调用gcc编译，编译文件只在缓存中
+	make install   		 #安装文件
+	make clean  		 #清除缓存文件
+
+4.卸载软件
+
+	rm -rf /usr/local/apache2
