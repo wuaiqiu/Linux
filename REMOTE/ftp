@@ -99,7 +99,7 @@
 			chroot_list_file=/etc/vsftpd/chroot_list#列表位置
 
 		(4)限制用户登入ftp
-			pam_service_name=vsftpd 		#此/etc/vsftp/vsftpd文件的用户不能登入
+			pam_service_name=vsftpd 		#用于pam验证登入用户，此/etc/vsftp/vsftpd文件的用户不能登入
 			
 			userlist_enable=YES
 			userlist_deny=NO  			#此/etc/vsftp/user_list文件的用户能登入
