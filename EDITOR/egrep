@@ -1,0 +1,17 @@
+			egrep      -----extend global search regular expression and print out the line
+
+1.语法格式
+
+	egrep   [options]  REGEX file .....
+
+	-i ---------- 忽视大小写
+
+	--color=auto ----- 匹配REGEX高亮显示
+
+	-o ---------- 只显示被模式匹配的字符串
+
+	-v ---------- 反向显示
+
+	-n ---------- 显示行号
+
+	-l ---------- 匹配到的文件名
