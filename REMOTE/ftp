@@ -89,7 +89,9 @@
 
 		(2)欢迎信息
 			dirmessage_enable=YES    		#在每个用户的家目录下 /var/ftp/Lee/.message
-		
+			
+			ftpd_banner=Welcome to blah FTP service. #欢迎信息
+	
 		(3)锁定用户于家目录
 			chroot_local_user=YES			#全局锁定
 
