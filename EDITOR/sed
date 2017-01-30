@@ -1,0 +1,50 @@
+		sed    ----Stream EDitor
+
+1.模式空间(pattern space)
+
+	sed默认不编辑源文件，仅对模式空间的数据做处理，处理结束后
+将模式空间的数据打印到屏幕
+
+	sed [options] 'AddressCommand'  file...
+
+
+2.options
+
+	-n :静默模式，不显示模式空间的内容；
+	    默认下，在模式空间处理后，则会打印模式空间的内容
+
+	-i:直接修改源文件
+
+	-r:使用扩展正则表达式
+
+3.Adddress
+
+	(1)startLine,endLine ----------- 处理第startLine到endLine行
+
+	(2)/REGEX/ --------------------- 处理匹配到REGEX的行
+
+	(3)/REGEX1/,/REGEX2/ ----------- 处理从匹配到REGEX1到REGEX2的行
+
+	(4)startLine, +N --------------- 处理从startLine及向后的N行
+
+	(5)LineNumber ------------------ 处理第LineNumber行
+
+4.Command
+
+	(1) d -------------------------- 删除符合的行
+
+	(2) p -------------------------- 打印符合的行
+
+	(3) a\String ------------------- 在符合行的后面添加新行String,空格可直接写，回车用\n
+
+	(4) i\String ------------------- 在符合行的前面添加新行String
+
+	(5) s/REGEX/String/g ----------- 替换符合行的匹配到REGEX的字符串于String
+	
+	(6) r File --------------------- 将File文件追加到符合行后面
+
+	(7) w newFile ------------------ 将符合行另存为newFile
+
+	(8) !Command ------------------- 表示Command对非符合的行起作用
+
+	(9) c\String ------------------- 替换符合条件的行于String
