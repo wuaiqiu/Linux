@@ -1,0 +1,18 @@
+		Repository  
+
+1.将所有的rpm包拷贝到一个文件夹
+
+	mkdir  /tmp/yum
+
+	cp  /mnt/Packages  /tmp/yum  -rf
+
+2.安装createrepo软件
+	
+	rpm -ihv /tmp/yum/Packages/createrepo
+
+3.运行createrepo命令
+
+	createrepo -V
+
+
+	
