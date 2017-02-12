@@ -1,0 +1,44 @@
+		yum      -------Yellowdog Updater Modified
+
+1.安装软件
+
+	yum  install  softwareName
+
+2.查询软件
+
+	yum  search  keyword  				 	#在线查找相关软件包
+	yum  list  (all | installed | recent | updates) 	#列出（所有|已安装|最近安装|有更新的）的软件列表
+	yum  info softwareName  				#查询软件的信息 
+	yum  whatprovides fileName   				#查询那个软件包含有目标文件
+
+3.升级软件
+
+	yum update 		 #全部更新
+	yum  update  softwareName
+
+4.卸载软件
+
+	yum  remove softwareName
+
+5.软件组安装
+
+	yum  groupinstall softwareGroupName
+
+6.软件组查询
+
+	yum  grouplist 
+	yum  groupinfo softwareGroupName
+
+7.软件组升级
+
+	yum groupupdate softwareGroupName
+
+8.软件组卸载
+	
+	yum  groupremove softwareGroupName
+
+9.yum缓存
+	
+	yum clean all  #清除缓存
+	yum makecache  #生成缓存
+
