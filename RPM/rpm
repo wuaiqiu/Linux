@@ -1,0 +1,46 @@
+				RPM    -----RedHat Package Manager
+
+1.安装软件
+
+	rpm   -ihv  softwareName.rpm
+	      --nodeps    	 #忽视软件包的依赖关系
+	      --force   	 #重新安装已有的软件
+
+2.查询软件（已安装）
+
+	rpm -qa   			#查看所有安装
+	rpm -q 	softwareName		#软件是否安装
+	rpm -qi softwareName   		#软件的详细信息
+	rpm -ql softwareName   		#软件的安装文件列表
+	rpm -qc softwareName        	#软件的配置文件
+	rpm -qpi softwareName.rpm   	#查看软件包的信息
+
+3.升级软件
+
+	rpm -Uvh softwareName.rpm  	#重装软件
+	rpm -Fvh softwareName.rpm  	#如果有老版本软件，则升级，否则退出(正确升级)
+
+4.卸载软件
+
+	rpm -e softwareName 
+	rpm -e --nodeps softwareName  	#忽视软件的依赖关系
+
+5.校验已安装的软件
+
+	rpm -V softwareName
+		 
+		 S file Size differs
+      		 M Mode differs (includes permissions and file type)
+       		 5 digest (formerly MD5 sum) differs
+       		 D Device major/minor number mismatch
+       		 L readLink(2) path mismatch
+       		 U User ownership differs
+       		 G Group ownership differs
+                 T mTime differs
+       		 P caPabilities differ
+
+6.重建数据库  (/var/lib/rpm)
+
+	rpm 	--rebuilddb      #重建数据库，不管有没有都建立
+	rpm 	--initdb        #只建立不存在的数据库
+
