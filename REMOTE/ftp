@@ -108,3 +108,33 @@
 		(5)限制连接数
 			max_per_ip=20		#每个ip最大连接数
 			max_clients=10		#最大链接数
+
+8.ftp模式(21:命令端口;20:数据端口)
+		
+		(1)主动模式(PORT)
+		
+			a.客户端端口x请求ftp服务器端口21,并开通端口x+1	
+			b.ftp发送ack于客户端端口x
+			*c.ftp服务器端口20发送请求与客户端x+1(易被客户端的防火墙拦截)
+			d.客户端x+1发送ack与ftp服务器端口20
+			
+			/etc/vsftpd/vsftpd.conf
+				pasv_enable=NO  #启动主动模式		
+		
+		(2)被动模式(PASV)
+		
+			a.客户端端口x请求ftp服务器端口21	
+			b.ftp发送ack于客户端端口x,并开通端口y			
+			*c.客户端端口x+1请求连接ftp服务器端口y(易被ftp服务器的防火墙拦截)
+			d.ftp服务器端口y发送ack与客户端端口x+1
+			
+			/etc/vsftpd/vsftpd.conf
+			
+				pasv_min_port=30000
+				pasv_max_port=30010
+				
+9.防火墙设置
+
+	iptables -I INPUT 5 -p tcp --dport 21 -j ACCEPT
+	iptables -I INPUT 6 -p tcp --dport 30000:30010 -j ACCEPT
+	service iptables save
