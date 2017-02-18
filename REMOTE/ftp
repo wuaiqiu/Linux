@@ -136,5 +136,37 @@
 9.防火墙设置
 
 	iptables -I INPUT 5 -p tcp --dport 21 -j ACCEPT
+	
 	iptables -I INPUT 6 -p tcp --dport 30000:30010 -j ACCEPT
+	
 	service iptables save
+
+10.selinux设置
+
+	setsebool -P ftp_home_dir=on  	       #如果要允许ftp读取和写入用户主目录中的文件，则必须打开ftp_home_dir布尔值。
+			
+		 -P allow_ftpd_full_access     #如果要允许ftp服务器登录到本地用户并读取/写入系统上
+						的所有文件（受DAC控制），则必须打开allow_ftpd_full_access布尔值。
+
+		allow_ftpd_anon_write  		#如果要允许ftp服务器上传文件，用于公用文件传输服务。
+						目录必须标记为public_content_rw_t，您必须打开allow_ftpd_anon_write布尔值。
+
+		allow_ftpd_use_cifs		#如果要允许ftp服务器使用用于公用文件传输服务的cifs，
+						则必须打开allow_ftpd_use_cifs布尔值。
+
+		httpd_enable_ftp_server		#如果要通过侦听ftp端口允许httpd充当FTP服务器，则
+						必须打开httpd_enable_ftp_server布尔值。
+
+		allow_ftpd_use_nfs		#如果你想允许FTP服务器使用用于公共文件传输服务的NFS，
+						你必须打开allow_ftpd_use_nfs布尔值。
+
+		ftpd_use_passive_mode		#如果要允许ftp服务器使用绑定到所有未预留的端口用于被动模式，
+						则必须打开ftpd_use_passive_mode布尔值
+
+		
+		ftpd_connect_db			#如果要允许ftp服务器使用连接到mysql数据库，则必须打开ftpd_connect_db布尔值。
+
+		
+		
+
+
