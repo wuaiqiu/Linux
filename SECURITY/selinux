@@ -2,11 +2,30 @@
 
 1.selinux简介
 
+
+
+		自主访问控制(Discretionary Access Control，DAC)是这样的一种控制方式，由客体的属主
+		
+	对自己的客体进行管理，由属主自己决定是否将自己的客体访问权或部分访问权授予其他主体，这种
+	
+	控制方式是自主的。
+
+		
+		强制访问控制(Mandatory Access Control, MAC)，用于将系统中的信息分密级和类进行管理，
+	
+	以保证每个用户只能访问到那些被标明可以由他访问的信息的一种访问约束机制。
+
+
+-----------------------------------------------------------------------------------------------
+
+
 		selinux定义了一个进程(subject)在某个区域(domain)下对某种类型(type)的文件(object)
 	
 	能完成某些动作(action).
 	
-	selinux类型:targeted(目标模式;只对一些预定的进程作用) , strict(严格模式;对全部进程起作用)
+	selinux类型:targeted(目标模式;只对一些预定的进程作用---靠安全上下文,与策略布尔值) ,
+
+	 strict(严格模式;对全部进程起作用)
 	
 		/etc/selinux/config
 			
@@ -14,6 +33,7 @@
 
 2.查看object安全上下文
 
+	
 	ls -Z 或 ps auxZ
 	
 	格式 : User_identity : Role : Type [:Level:Category]
@@ -33,7 +53,7 @@
 	
 	(3)Type:类型,用来将主体(subject)和客体(object)划分为不同的组，给每个主体和
 	
-	系统中的客体定义了一个类型；为进程运行提供最低的权限环境；
+	系统中的客体定义了一个类型；为进程运行提供最低的权限环境；(在targeted模式下重要)
 	
 	(4)Level与Category
 		
@@ -41,6 +61,7 @@
 		
 		Category:代表分类，目前已经定义的分类为c0-c1023
 		
+
 3.打开或关闭selinux
 
 	getenforce     #查看selinux状态
@@ -70,10 +91,7 @@
 	
 	setsebool -P samba_enable_home_dirs=on #-P 永久有效
 
-6.恢复默认安全上下文
+6.恢复默认安全上下文(与主目录相同)
 
-	restorecon -R file
+	restorecon -R /path/dir/
 
-7.策略管理工具semanage
-
-	semanage fcontext -l #查看所有目录默认类型
