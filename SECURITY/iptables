@@ -1,0 +1,159 @@
+					iptables
+
+1.语法简介
+
+		iptables [-t TABLE] COMMAND CHAIN [#] 匹配标准 -j 处理方法
+		
+
+2.TABLE(默认为filter表)
+
+		(1)filter表:
+				
+				INPUT ------------------- 从外界走向应用空间
+				
+				OUTPUT ------------------ 从应用空间走向外界
+				
+				FORWARD -----------------  转发
+				
+		(2)nat表:(地址转换)
+				
+				PREROUTING -------------- 刚进入网卡，正准备进入路由
+				
+				POSTROUTING ------------- 正准备转发，进入路由
+		
+		(3)mangle表:(修改报文再重新封装)
+				
+				INPUT ------------------- 从外界走向应用空间
+				
+				OUTPUT ------------------ 从应用空间走向外界
+				
+				FORWARD -----------------  转发
+				
+				PREROUTING -------------- 刚进入网卡，正准备进入路由
+				
+				POSTROUTING ------------- 正准备转发，进入路由
+				
+		(4)raw表:(对报文不做任何处理)
+				
+				PREROUTING -------------- 刚进入网卡，正准备进入路由
+				
+				OUTPUT ------------------ 从应用空间走向外界
+
+				
+3.COMMAND
+
+		----------------- 管理规则 ---------------------------------
+		
+		-A CHAIN : 在CHAIN链尾部添加一条规则
+		
+		-I CHAIN num : 在CHAIN的第num位置插入一条规则
+		
+		-D CHAIN num : 删除第num位置的一条规则
+		
+		-R CHAIN num : 替换第num位置的一条规则
+		
+		------------------- 管理链 ----------------------------------
+		
+		-F [CHAIN] : 清空指定的CHAIN,若没有指定CHAIN,则清空指定的表的所有链
+		
+		-P [CHAIN] : 设定指定链的默认策略( ACCEPT | DROP ),默认为ACCEPT
+		
+		-N [newCHAIN] : 制定一个自定义链
+		
+		-X [oldCHAIN] : 删除一个自定义空链,不能删除默认链
+		
+		-Z [CHAIN] : 清空指定链所有的计数器(pkts:报文总个数,byte:报文总大小)
+		
+		-E [oldCHAIN newCHAIN] : 重命名
+		
+		--------------------- 查看链 ---------------------------------
+		
+		-L [CHAIN] : 显示指定表中的所有链
+			-n ------------- 以数值格式显示
+			-v ------------- 详细信息
+			--line-number -- 显示规则号码
+		
+4.匹配标准
+
+		(1)通用匹配
+		
+				-s ----------------- 源端口
+				
+				-d ----------------- 目标端口
+				
+				-i ethx ------------ 指定数据报文流入的接口：PREROUTING,INPUT,FORWARD
+				
+				-o ethx ------------ 指定数据报文流出的接口：OUTPUT,POSTROUTING,FORWARD
+		
+		(2)扩展匹配
+			
+		---------------------- 隐式扩展 ---------------------------------------------
+		
+			-p { tcp | udp | icmp }
+			
+				tcp:
+					--sport port1[:port2]  ----------- 源端口,支持连续端口
+					--dport port1[:port2] ------------  目标端口
+					--tcp-flags mask comp ------------- mask中的comp标志位必须为1
+					--syn ----------------------------- 匹配tcp三次握手的第一次
+				
+				udp:
+					--sport port1[:port2]
+					--dport port1[:port2]
+					
+				icmp:
+					--icmp-type [ 0 | 8 ] --------------- 0:ping应答;8:ping请求
+					
+		---------------- 显示扩展 ------------------------------------------
+		
+		-m EXTENSION
+			
+			state(状态扩展):
+				--state NEW : 新连接请求
+				--state ESTABLISHED : 已建立连接
+				--state INVALID : 非法连接请求
+				--state RELATED : 相关联的
+				
+			multiport(离散端口匹配):
+				--source-ports port1,port2....
+				--destination-ports port1,port2...
+				
+			iprange(ip范围匹配):
+				[!]--src-range ip-ip
+				[!]--dst-range ip-ip
+				
+			connlimit(每个ip连接数限制):
+				!--connlimit-above n
+				
+			string(字符串匹配扩展):
+				--algo { bm | kmp } # 选择算法
+				--string "String"  #匹配的字符串
+
+5.处理方法
+
+		ACCEPT : 允许接受并通过
+		
+		DROP : 拒绝不回复
+		
+		REJECT : 拒绝并回复
+		
+		DNAT : 目标地址转换(用于nat表)
+			--to-destination ip[:port]
+			
+		SNAT : 原地址转换(用于nat表)
+			--to-source ip[:port] 
+			
+		REDIRECT : 重定向
+		
+		LOG : 日志(/var/log/messages)
+			--log-prefix "String"  #指定前缀
+		
+		MASQUERADE : 地址伪装(用于nat表)
+		
+		
+6.其他用法
+	
+	service iptables save #保存规则至默认文件(/etc/sysconfig/iptables)
+	
+	iptables-save >/path/newFile #将规则保存到newFile
+	iptables-restore </path/newFile #读取newFile规则
