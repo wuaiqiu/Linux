@@ -1,0 +1,79 @@
+				selinux     ---Security Enhanced Linux
+
+1.selinux简介
+
+		selinux定义了一个进程(subject)在某个区域(domain)下对某种类型(type)的文件(object)
+	
+	能完成某些动作(action).
+	
+	selinux类型:targeted(目标模式;只对一些预定的进程作用) , strict(严格模式;对全部进程起作用)
+	
+		/etc/selinux/config
+			
+				LINUXTYPE=targeted
+
+2.查看object安全上下文
+
+	ls -Z 或 ps auxZ
+	
+	格式 : User_identity : Role : Type [:Level:Category]
+	
+	(1)User_identity:用户,类似UID,提供用户身份验证
+	
+			user_u : 普通用户
+			system_u : 系统用户
+			root : root用户
+	
+	(2)Role:角色,类型组GIU
+	
+			进程 -------------------- system_r
+			文件,目录,设备 ---------- object_r
+			用户 -------------------- targeted(system_r)
+									  strict(sysadm_r staff_r user_r)
+	
+	(3)Type:类型,用来将主体(subject)和客体(object)划分为不同的组，给每个主体和
+	
+	系统中的客体定义了一个类型；为进程运行提供最低的权限环境；
+	
+	(4)Level与Category
+		
+		Level:代表安全等级,目前已经定义的安全等级为s0-s15,等级越来越高
+		
+		Category:代表分类，目前已经定义的分类为c0-c1023
+		
+3.打开或关闭selinux
+
+	getenforce     #查看selinux状态
+	
+	setenforce [ 0(Permission) | 1(Enforcing)] #临时设置selinux状态
+		0 --------- 操作不被拒绝并写入日志(/var/log/audit/audit.log)
+		1 --------- 操作会被拒绝并写入日志
+		disabled -- 禁用selinux
+		
+	/etc/selinux/config
+		
+		selinux=[ permission | enforcing | disabled ]
+		
+
+4.改变object安全上下文
+
+	chcon -t Type
+		  -u User_identity
+		  -r Role
+		  -R #遍历
+		  --reference=/path/file
+	
+	
+5.改变默认策略的布尔值
+
+	getsebool -a  #查看默认布尔值
+	
+	setsebool -P samba_enable_home_dirs=on #-P 永久有效
+
+6.恢复默认安全上下文
+
+	restorecon -R file
+
+7.策略管理工具semanage
+
+	semanage fcontext -l #查看所有目录默认类型
