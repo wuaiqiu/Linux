@@ -1,0 +1,192 @@
+					PAM    -----Pluggable Authentication Modules   
+
+
+1.pam配置文件格式(/etc/pam.d/ServerName)
+
+	module_type  control_flag  module_path  args
+	
+2.module_type (控制使用什么类型的管理机制)
+
+	(1) auth	用来对用户的身份进行识别.如:提示用户输入密码,或判断用户是否为root等.
+
+	(2) account	对帐号的各项属性进行检查.如:是否允许登录,是否达到最大用户数,或是root
+	
+	用户是否允许在这个终端登录等.
+
+	(3) session	这个模块用来定义用户登录前的,及用户退出后所要进行的操作.如:登录连接信
+	
+	息,用户数据的打开与关闭,挂载文件系统等.
+
+	(4) password 当用户修改密码,检查动作是否有效,以及密码的复杂性.
+	
+
+3.control_flag (可以理解成对PAM认证的流程控制。比如说如果成功，下一步应该怎么办？)
+
+	(1)required		这个标记表示需要模块返回一个成功值.如果返回失败,则继续进行同类型的下
+	
+	一个操作,当所有此类型的模块都执行完后.才返回失败值.
+
+	(2)requisite	与required相似,但是如果这个模块返回失败,则立刻向应用程序返回失败.
+
+	(3)sufficient	如果此模块返回成功,则直接向应用程序返回成功.
+
+	(4)optional		使用这个标记的模块,将不进行成功与否的返回.一般返回一个PAM_IGNORE(忽略).
+	
+	(5)include		有点类似于DNS或xinetd的include。表示将包括其他的一些认证，这样就可以建立
+	
+	一个分离式的配置文件管理机制。
+	
+	
+4.module_path (要调用模块的位置. 一般保存在/lib/security/或(/lib64/security/)下)
+
+	(1)pam_unix.so模块: 
+		
+		auth类型: 提示用户输入密码,并与/etc/shadow文件相比对.匹配返回0(PAM_SUCCESS). 
+		
+		account类型: 检查用户的账号信息(包括是否过期等).帐号可用时,返回0. 
+		
+		password类型: 修改用户的密码. 将用户输入的密码,作为用户的新密码更新shadow文件
+		
+	-------------------------------------------------------------------------------------
+	
+		[nullok]	此模块的默认操作是，如果用户的官方密码为空，则不允许用户访问服务。 
+		
+		nullok参数覆盖此默认值,即空为ok
+		
+		[shadow]	用于shadow验证密码
+		
+		[md5]		密码加密方法
+		
+	
+	
+	(2)pam_cracklib.so模块: 
+		
+		password类型: 这个模块可以插入到一个程序的密码栈中,用于检查密码的强度. 
+	
+	这个模块的动作是提示用户输入密码,并与系统中的字典进行比对,检查其强度.
+
+	
+	-------------------------------------------------------------------------
+	
+		[minlen=N]		最小长度
+		
+		[difok=N]		检查是否为前面相同
+		
+		[dcredit=N]		包含几个数字
+		
+		[ucredit=N]		包含几个大写字母
+		
+		[lcredit=N]		包含几个小写字母
+		
+		[retry=N]		尝试次数
+		
+	
+	
+	(3)pam_loginuid.so模块: 
+	
+		session类型:用来设置已通过认证的进程的uid.以使程序通过正常的审核(audit). 
+
+	(4)pam_securetty.so模块: 
+	
+		auth类型: 如果用户要以root登录时,则登录的tty必须在在/etc/securetty中. 
+	
+	(5)pam_rootok.so模块: 
+		
+		auth类型: pam_rootok模块用来认证用户id是否为0.为0返回”PAM_SUCCESS”.
+	
+	(6)pam_console.so模块: 
+		
+		session类型: 当用户登录到终端时,改变终端文件文件的权限.在用户登出后,再将它们修改回来. 
+	
+	(7)pam_permit.so模块: 
+		
+		auth,account,password,session类型: pam_permit模块任何时候都返回成功. 
+	
+	(8)pam_env.so模块 : 
+		
+		auth类型: pam_env允许设置环境变量.默认下,若没有指定文件,将依据 
+	
+	/etc/security/pam_env.conf进行环境变量的设置. 
+
+	
+	(9)pam_stack.so模块: 
+		
+		auth,account,password,session: pam_stack可以调用另一个服务.也就是多个服务可以
+		
+	包含到一个设置中.当需要修改时,只修改一个文件就可以了.
+
+	(10)pam_warn.so模块: 
+		
+		auth,account,password,session: pam_warn用来记录服务,终端,用户,远程用户和远程
+		
+	主机的信息到系统日志.模块总是返回PAM_IGNORE,意指不希望影响到认证处理. 
+	
+	(11)pam_deny.so模块:
+	
+		auth,account,password,session: 一个特殊的PAM模块，这个模块将永远返回否。类似大
+	
+	多数的安全机制配置准则，一个严谨的安全规则的最后一项永远是否。
+	
+	(12)pam_limits.so模块:
+	
+		session:类似Linux的ulimit命令，赋给用户登录某个会话的资源限度。如core文件的大小，
+		
+	memory的用量，process的用量，等等。(默认/etc/security/limits.conf或者
+	
+	/etc/security/limits.d/ServerName.conf)
+	
+	
+	--------------------------------------------------------------------------------------
+	limits.conf格式
+	
+		<domain>  <type>  <item>  <value>
+
+	domain : username | @groupname | *(所有) 
+	
+	type : soft(软限制) | hard(硬限制) 
+			一旦用户超过软限制，配额计时器便开始计时。在配额计时器计时期间，用户可以使用高于
+		软限制的配额，但不能超过硬限制。一旦用户低于软限制，计时器就将复位。但当计时器过期时，
+		如果用户的使用配额一直在软限制以上，则会将软限制强制作为硬限制。缺省情况下，软限制计
+		时器设置为七天。
+		
+	item : nofile(所能打开的最大文件的个数)
+			rss(所能使用的最大内存大小KB)
+			cpu(所能使用的cpu时间min)
+			nproc(最多打开的进程个数)
+		
+		
+	(13)pam_listfile.so模块 
+	
+		高度自定义的一个认证模块。理论上你可以用这个模块来控制任何服务
+
+	---------------------------------------------------------------------------------
+	
+	item=[tty|user|rhost|ruser|group|shell]	
+	
+			应检查的对象
+			
+	sense=[allow|deny]
+	
+			出现在文件的动作是允许还是拒绝
+			
+	file=/path/filename
+	
+			文件路径
+			
+	onerr=[succeed|fail]
+	
+			发生错误的动作,如file不存在
+
+	quiet
+	
+			不将服务拒绝或缺失列表文件视为需要记录的错误
+	
+
+5.args (传递给模块的参数.参数可以有多个,之间用空格分隔开)
+
+
+
+
+	
+
+	
