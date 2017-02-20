@@ -1,0 +1,200 @@
+						authority
+
+1.UID与GID
+	
+	UID:用户唯一标识(1-500为系统用户,500-为普通用户),0为root用户,系统用户不允许登入
+系统.
+
+	GID:组的唯一标识,每个用户都有一个基本组(默认创建文件的组),与多个附加组.
+						
+2.用户管理
+	
+		/etc/passwd
+		
+	userName:x:UID:GID:comment:homepath:shell
+		
+		root:x:0:0:root:/root:/bin/bash
+	
+	
+	------------------------添加用户------------------------------------
+	
+	useradd  [options]  userName
+			-u UID ----------------------- 500以上
+			-g GID ----------------------- 基本组(需要存在)
+			-G GID,GID.... --------------- 附加组(需要存在)
+			-c "comment" ----------------- 用户注释
+			-d /path/home ---------------- 家目录路径
+			-s shellName ----------------- 合法shell
+			-mk -------------------------- 创建家目录并复制/etc/skel目录下的配置文件
+			-M --------------------------- 不创建家目录
+			
+			
+	-----------------------删除用户--------------------------------------
+	
+	userdel  -r  userName  ---------------- 连同家目录一起删除(默认不删除家目录)
+	
+	----------------------修改用户---------------------------------------
+	
+	usermod  [options]  userName
+			-u UID ----------------------- 500以上
+			-g GID ----------------------- 基本组(需要存在)
+			-G GID,GID.... --------------- 附加组(需要存在),默认覆盖原有组,-a用于追加组
+			-c "comment" ----------------- 用户注释
+			-d /path/home ---------------- 家目录路径
+			-s shellName ----------------- 合法shell
+			-l newName ------------------- 修改用户名
+			-L --------------------------- 锁定用户
+			-U --------------------------- 解锁用户
+			
+			
+	-------------------查看用户--------------------------------------
+	
+		id [options] userName 
+			-u -------------- 查看UID
+			-g -------------- 查看GID
+			-G -------------- 查看附加组
+			
+	
+	chsh(change shell):修改用户shell
+	chfn(change finger):修改用户注释
+	finger userName:查看userName的信息
+
+	
+3.密码管理
+	
+		/etc/shadow
+		
+	userName:
+	password($n加密方法$杂质$密码,当密码前加'!!'表示锁定用户,当密码是'*'表示不能登入系统):
+	passwordChangeTime(最近一次修改密码的时间,距1970.1.1的天数):
+	minPassword(下一次可以修改密码所需要过的时间,单位天数,0或空表示随时修改):
+	maxPassword(下一次必须修改密码所需要过的时间,单位天数):
+	warningTime(距maxPassword前的警告时间,单位天数):
+	inactivityTime(maxPassword后的强制修改密码时间,单位天数):
+	expirationTime(账号有效期,距1970.1.1的天数,空字段表示帐户永不过期):
+	reserved(预留字段)
+		
+	root:$6$xFCJtC/r$2zLLFF/BG1wrJcyVFdyCw6HaW8ZVY2oHFdmIvY7QA8Dhc3AwefsboVZLoYnev.
+	oyLxpSufAht95kw/5rJ50sP0:17217:0:99999:7:::
+	
+	------------------修改密码-------------------------------
+	
+	passwd [options] [userName]
+		
+			-l --------------------- 锁定用户
+			-u --------------------- 解锁用户
+			-n --------------------- minPassword
+			-x --------------------- maxPassword
+			-w --------------------- warningTime
+			-i --------------------- inactivityTime
+			-d --------------------- 清空用户密码
+			
+
+4.组管理
+
+	/etc/group
+	
+	groupName:x:GID:userList
+		
+		root:x:0:
+		
+	----------------管理组---------------------------------
+	
+	groupadd -g GID groupName    #添加组
+	
+	groupmod -g GID -n newName  groupName #修改组GID与groupName
+	
+	groupdel groupName				#删除组
+	
+	newgrp groupName 				#切换基本组exit可退出
+	
+5.文件权限(r:4 w:2 x:1)
+	
+	(1)文件
+		
+		r ---------- 可读,可以查看文件内容
+		w ---------- 可写,可以编辑或删除文件
+		x ---------- 可执行
+	
+	(2)目录
+		
+		r ---------- 可读,可以执行ls列出内部文件
+		w ---------- 可以在此目录创见文件
+		x ---------- 可以进入此目录,也可以使用ls -l查看内部文件详细信息
+		
+	(3)权限管理
+		
+		a.修改属主(和属组)
+		chown userName[.groupName] file...
+		chown userName[:groupName] file...
+				-R
+				--reference=/path
+				
+		b.修改属组
+		chgrp groupName file...
+				-R
+				--reference=/path
+		
+		c.修改权限0表示无任何权限
+		chmod ### file....
+				-R
+				--reference=/path
+		
+		chmod u=[rwx],g=[rwx],o=[rwx] file...
+		
+		chmod u[+|-]rwx,g[+|-]rwx,o[+|-]rwx file...
+		
+
+6.特殊权限(SUID 4 ;SGID 2 ;Sticky 1)
+
+	SUID(set user id) : 运行某程序时,相应进程的属主是程序文件自身的属主，而不是启动者的属主
+					-rws------   当设置SUID时
+					-rwS------   当设置SUID,但没有x权限
+	
+	SGID(set group id) : 运行某程序时,相应进程的属组是程序文件自身的属组，而不是启动者的基本组
+					----rws---	 当设置SGID
+					----rwS---   当设置SGID,但没有x权限
+		
+	Sticky : 在一个公共目录,每个用户都可以创建文件,删除自己的文件,但不能删除别人的文件
+					-rwtrwtrwt   当设置Sticky
+	
+	---------------设置特殊权限---------------------------------------------
+				
+			chmod u[+|-]s,g[+|-]s,o[+|-]t file....
+
+
+7.文件系统访问列表
+
+		FACL(FileSystem Access Control List) : 利用文件扩展保存在额外的访问权限
+当一个文件有扩展属性时,在权限栏会多一个"+"
+			-rw-r--r--+ 1 root root  824 Feb 19 05:27 hosts
+		
+		
+		getfacl file 				#获取额外扩展权限
+		
+		setfacl -m u:UID:perm		#设置属主的额外权限
+				   g:GID:perm		#设置属组的额外权限
+				   o:perm			#设置其他的权限
+				   m:perm			#设置mask码
+					
+				-x u:UID			#取消属主的额外权限
+				   g:GID			#取消属组的额外权限
+				   
+
+8.umask
+	
+	-rw-rw-rw-(默认新建文件权限)
+	drwxrwxrwx(默认新建目录权限)
+	
+	umask=0022
+	上面四个数字代表是赋值初始化准备丢弃的权限。
+　　第一个0代表特殊权限丢弃的权限；
+　　第二个0代表本文件/目录拥有者什么权限都没丢弃；
+　　第三个2代表本文件/目录的用户组丢弃了w权限；
+　　第四个2代表本文件/目录的用户组丢弃了w权限。
+　　综合上面所说如果你新创建一个文件那么它的权限是：-rw-r--r-- 即是：644
+　　如果你新创建一个目录的话那么它的权限是：drwxr-xr-x 即是：755
+
+
+	设置umask
+		umask 011
