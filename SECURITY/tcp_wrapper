@@ -1,0 +1,69 @@
+					tcp_wrapper
+					
+1.简介
+
+	工作在用户请求和服务监听套接字之间的检查过滤机制。可以实现对某种服务的
+
+访问请求，根据规则定义判断是否允许访问。
+
+2.检验可用性
+	
+	tcp_wrapper依赖libwrap库文件,一种是/lib64/libwrap.so;另一种是已经编译为
+
+静态库文件
+ 
+	(1).动态库文件(ldd命令用于判断某个可执行的 binary 档案含有什么动态函式库)
+        
+		ldd `which sshd`|grep libwrap 
+
+				-----若出现libwarp.so文件则说明使用动态库方式--------
+				
+	(2).静态库文件(strings命令在对象文件或二进制文件中查找可打印的字符串)
+		
+		strings `which portmap` |grep hosts 
+            
+        ----若出现/etc/host.allow和/etc/host.deny文件，则说明已编译为静态-----
+		
+3.tcp_warp访问控制文件格式(/etc/host.allow和/etc/host.deny)
+			
+		DAEMON_LIST : CLIENT_LIST [ :OPTIONS]
+		
+	(1)DAEMON_LIST (二进制程序名(/bin或/sbin下)，不是服务名)
+	
+			Daemon,... --------- 进程列表,如vsftpd,sshd
+			ALL ---------------- 本机接受所有tcp访问控制的服务
+			Daemon@ip ---------- 指定ip的服务进程,如vsftpd@192.168.43.200
+	
+	(2)CLIENT_LIST	(客户端列表)
+	
+			ip ------------------ ip地址
+			networkaddr --------- 网段直接受长格式,如192.168.0.0/255.255.0.0或192.168.
+			hostname ------------ 主机名(FQDN或.domain)
+			MACRO --------------- 宏
+								ALL 全部客户端
+								LOCAL 和本机网卡在同个网段内的主机
+								KNOWN FQDN可以被正常解析
+								UNKNOWN FQDN无法解析
+								PARANOID FQDN正向解析和反向解析不匹配
+								EXCEPT 除了，不包含
+								
+	
+	(3)OPTIONS (选项)
+	
+			DENY ------------------------------- 拒绝
+            ALLOW ------------------------------ 允许
+            spawn echo “STRINGS” >> /var/log/xxxx.log 记录日志
+			
+		STRINGS:  %c 客户端信息 格式为 USER@HOST
+				  %s 访问服务的信息 格式为 SERVER@HOST
+				  %h 客户端主机名
+				  %p 访问服务的pid 
+				  
+
+4.控制流程
+
+    hosts.allows --> hosts.deny --> 默认规则
+
+    1.检查hosts.allow，若有匹配规则则允许访问，若没有则检查hosts.deny
+    2.检查hosts.deny，若有匹配规则则拒绝访问
+    3.检查默认规则，默认为允许
