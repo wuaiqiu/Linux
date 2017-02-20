@@ -1,0 +1,52 @@
+					search
+
+1.find(实时查找)
+
+		find   PATH(默认当前文件)  查找标准   查找到后的处理
+		
+	a. 查找标准
+	
+		-name fileName(支持文通配)
+		-iname fileName(不区分大小写)
+		-user userName
+		-group groupName
+		-uid UID
+		-gid GID
+		-nouser
+		-nogroup
+		-type [d(目录)|f(文件)]
+		-size [+|-]#K   [+|-]#M		[+|-]#G   默认byte,空符号表示等于
+				+ : 表示大于
+				- ：表示小于
+		-mtime	[+|-] #		
+		-atime	[+|-] #		
+		-ctime	[+|-] #		
+				不加符号表示离现在#天之内
+				-表示离现在#天之内
+				+表示离现在#天之外
+	
+		-perm mode
+		
+	b.组合条件
+	
+		-a : 与
+		-o : 或
+		-not : 非
+	
+	c.查找到后的处理
+		-print :　显示(默认)
+		-ls : 类似ls -l
+		-exec COMMAND {} \; : 执行其他命令,{}表示文件路径
+	
+	find . -name 'hosts' -exec echo {} >> a \;
+	
+	
+2.locate(非实时查找)
+	
+		locate fileName
+		
+		updatedb #更新数据库
+
+
+		
+		
