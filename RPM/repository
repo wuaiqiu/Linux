@@ -19,7 +19,7 @@
 	createrepo -g /mnt/repodata/..comps.xml /tmp/yum
 
 5.配置yum源(/etc/yum.repos.d/*.repo)
-
+		[Local]
 		name=This is a local repository   			#yum源的描述
 		baseurl=file:///tmp/yum/				#yum源的位置
 		enabled=1						#yum源是否启用
