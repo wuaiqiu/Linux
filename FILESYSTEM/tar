@@ -1,0 +1,65 @@
+					tar     ----------压缩打包工具
+
+
+1.gzip(*.gz)
+
+		gzip  	hosts      						#压缩完成后删除hosts.gz文件
+		
+		zcat  hosts.gz     						#查看压缩文件的内容
+		
+		gunzip  hosts.gz/gzip  -d  hosts.gz  	#解压缩文件完成后删除hosts.gz文件
+		
+
+2.bzip2(*.bz2)
+
+		bzip2  -#  hosts						#按#比例(1-9,默认6)压缩完成后删除hosts.bz2文件
+
+		bzcat    hosts.bz2						#查看压缩文件的内容
+		
+		bunzip2  hosts.bz2/bzip  -d  hosts.bz2  #解压缩文件完成后删除hosts.bz2文件
+		
+
+3.xz(*.xz)
+
+		xz  -#  hosts							#按#比例(1-9,默认6)压缩完成后删除hosts.xz文件
+
+		xzcat   hosts.xz						#查看压缩文件的内容
+		
+		unxz  hosts.xz/xz  -d  hosts.xz  		#解压缩文件完成后删除hosts.xz文件
+		
+4.zip(*.zip)打包工具
+
+		zip  newName.zip  repo/* 				#打包repo目录,原目录存在
+		
+		unzip newName.zip 						#解包,原zip包还存在
+		
+5.tar(*.tar.gz或*.tar.bz2或*.tar.xz)
+
+	===================*.tar.gz=====================================
+	
+		tar  -zcf  [file|dir]					#即归档又压缩,原目录存在===>>*.tar.gz
+				
+			 -ztf  *.tar.gz						#查看压缩文件
+			
+		     -zxf  *.tar.gz						#解压,原*.tar.gz包还存在
+			 
+			 
+	====================*.tar.bz2=============================================
+	
+		tar  -jcf  [file|dir]					#即归档又压缩,原目录存在===>>*.tar.bz2
+		
+			 -jtf  *.tar.bz2					#查看压缩文件
+
+		     -jxf  *.tar.bz2					#解压,原*.tar.bz2包还存在
+	
+	======================*.tar.xz===========================================
+	
+		tar  -Jcf  [file|dir]					#即归档又压缩,原目录存在===>>*.tar.xz
+		
+		     -Jtf  *.tar.xz						#查看压缩文件
+
+			 -Jxf  *.tar.xz						#解压,原*.tar.xz包还存在
+			 
+			 
+			 
+		
