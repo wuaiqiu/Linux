@@ -1,0 +1,77 @@
+					LVM      -----------Logical Volume Manager
+					
+1.简介
+
+	LVM:是一种将一个或多个硬盘的分区在逻辑上集合，相当于一个大硬盘来使用;当硬盘的空间
+	
+不够使用的时候，可以继续将其它的硬盘的分区加入其中，这样可以事项一种磁盘空间的动态管理，
+
+相对于普通的磁盘分区有很大的灵活性
+	
+	
+	(1).PV(Physical Volume)：物理卷，处于LVM最底层，可以是物理硬盘或者分区。     
+	
+	(2).PE(Physical Extend)：物理区域，PV中可以用于分配的最小存储单元，可以在创建PV的时候制定，
+	
+如1M, 2M, 4M, 8M, 32M, 64M…组成同一VG中所有PV的PE大小应该相同。     
+	
+	(3).VG(Volume Group)：卷组，建立在PV之上，可以含有一个到多个PV。    
+	
+	(4).LV(Logical Volume)：逻辑卷，建立在VG之上，相当于原来分区的概念。不过大小可以动态改变。
+	
+
+2.有关PV的指令
+
+		pvcreate  /dev/sda1		  	 	#创建PV
+		
+		pvremove /dev/sda1         		#移除PV
+		
+		pvmove  /dev/sda1  /dev/sda2	#将sda1的数据转移到sda2
+
+		pvs	[/dev/sda1]			   		#查看PV信息
+			
+		pvdisplay [/dev/sda1]        		#详细PV信息
+		
+		pvscan					   		#扫描PV设备
+		
+3.有关VG的指令
+
+		vgcreate  VG_Name  /dev/sda{0,1}  #创建VG  
+		
+		vgremove  VG_Name				  #移除VG
+		
+		vgextend VG_Name /dev/sda2        #扩展VG_Name
+		
+		vgreduce  VG_Name /dev/sda1       #减少一个pv
+		
+		vgs/vgdisplay [VG_Name]
+		
+		vgscan
+		
+		
+4.有关LV的指令(/dev/md-0与链接文件/dev/vgs/lvs,/dev/mapper/vgs-lvs)
+
+		lvcreate -n LV_Name -L size(M|G) VG_Name   #创建LV
+		
+		lvremove  /dev/VG_Name/LV_Name             #移除一个LV
+		
+		lvextend -L +#[M|G]	/dev/VG_Name/LV_Name   #扩展LV后resize2fs扩展
+													(+:表示扩展#M," ":表示扩展到#M)
+		
+		lvs/lvdisplay [/dev/VG_Name/LV_Name]
+		
+	    lvreduce -L -#[M|G] /dev/VG_Name/LV_Name   #先resize2fs减小,后lvreduce
+		
+		resize2fs /dev/VG_Name/LV_Name #G          #扩展实际分区,如果文件系统是处于mount状态下，
+												那么它只能做到扩容
+
+	
+5.快照卷(LVM快照创建的时候，仅复制原始卷中数据的元数据)
+
+		lvcreate -L #[M|G]  -p[r(只读)|w(读写)] -s -n Snap_Name /dev/VG_Name/LV_Name 
+					#为LV_Name创建snapshot
+		
+		
+		
+		
+		
