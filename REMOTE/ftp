@@ -166,6 +166,9 @@
 		
 		ftpd_connect_db			#如果要允许ftp服务器使用连接到mysql数据库，则必须打开ftpd_connect_db布尔值。
 
+11.vsftpd的xinet.d配置文件
+
+	/usr/share/doc/vsftpd-2.2.2/vsftpd.xinetd
 		
 		
 
