@@ -1,0 +1,149 @@
+					xinetd  ------eXtended InterNET services daemon
+					
+1.简介
+
+	a.独立启动（stand_alone):该类进程启动后就常驻内存，所以会一直占用系统资源。
+
+其最大的优点就是它会一直启动，当外界有要求时相应速度较快，像httpd等进程；独立运
+
+行的守护进程由init脚本负责管理，所有独立运行的守护进程的脚本在/etc/rc.d/init.d/
+(或/etc/init.d/)目录下
+	
+---------------------------------------------------------------------------------------
+
+	b.超级守护进程：系统启动时由一个统一的守护进程xinet来负责管理一些进程，当相
+
+应请求到来时需要通过xinet的转接才可以唤醒被xinet管理的进程。这种进程的优点时最初
+
+只有xinet这一守护进程占有系统资源，其他的内部服务并不一直占有系统资源，只有数据包
+
+到来时才会被xinet管理员来唤醒。并且我们还可以通过xinet来对它所管理的进程设置一些访
+
+问权限，相当于多了一层管理机制。
+
+
+-------------------------------------------------------------------------------------
+
+	c.运行级别
+	
+		0 : halt 关机
+		1 : single user modle 单人模式
+		2 : multi user mode (no NFS) 文本模式(no NFS)
+		3 : multi user mode 文本模式
+		4 : reseved 保留
+		5 : multi user mode 图形模式
+		6 : reboot 重启
+		
+	
+
+2.xinet的配置文件
+
+	(1)/etc/services
+		
+		在/etc/services中设置了xinetd下的service对应的端口
+		
+	(2)/etc/xinetd.conf(全局配置)
+	
+		xinetd的配置文件是/etc/xinetd.conf，但是它只包括几个默认值及/etc/xinetd.d
+
+目录中的配置文件。如果要启用或禁用某项xinetd服务，编辑位于/etc/xinetd.d目录中的配置文件。
+	
+		defaults
+			{
+				
+				前者的参数是启用的服务列表，后者的参数是禁用的服务列表
+				中间用空格分开，例如disabled = ftpd httpd
+				如果在disabled列表中被指定，那么无论包含在列表中的服务是否有配置文件和如何设置，
+				都将被禁用；如果enabled列表被指定，那么只有列表中的服务才可启动
+						
+						enabled		= 
+						disabled	=
+					
+					
+				====================================================================
+
+				
+					日志记录(/var/log/messages)
+	
+				log_type	= SYSLOG daemon info 
+				log_on_failure	= HOST
+				log_on_success	= PID HOST DURATION EXIT
+
+				
+				======================================================================
+					限制设置
+
+				no_access	= 192.168.43.100/24 #阻止ip访问
+							  www.baidu.com
+				only_from	= 192.168.43.100/24 #允许ip访问
+				max_load	= 0 				#最大负载
+				cps		= 50 10					#最多启动50个连接，如果达到这个数目将停止启动新
+												服务10秒。在此期间不接受任何请求。
+				instances	= 50				#同时运行的并发进程数
+				per_source	= 10				#一个主机的最大连接数
+
+				}
+				=============================================================================
+				
+					地址和网络默认值
+
+					bind		=192.168.43.200       #监听地址
+					mdns		= yes				  #是否支持服务的mdns注册的系统
+					v6only		= no				  #只监听ipv6
+				
+				=============================================================================
+				
+				includedir /etc/xinetd.d       #表示告诉xinetd要包含的文件或目录是/etc/xinetd.d
+			
+				=============================================================================
+
+	(3)/etc/xinetd.d/serverName
+
+			service serverName
+				{
+						disable = yes #是否禁用
+						socket_type=[stream|dgram]  #使用的TCP/IP socket类型，值可能为stream(TCP)，
+													dgram(UDP)
+						wait=[yes|no]   #其他用户在前一个用户使用时是否等待,对udp不能等待
+						user=root    #设置服务进程的UID,若xinetd的有效UID不是0， 该属性无效
+						server=/usr/sbin/vsftpd #要激活的进程，必须指定完整的路径
+						flags=[IPv4(此服务为ipv4) | IPv6(此服务为ipv6)]	 						
+						access_time=HH:mm~HH:mm (24时制) #访问时间
+						server_args=/etc/vsftpd/vsftpd.conf #传送的配置文件
+						log_on_failure  += USERID
+									+= ： 表示后面的设定为『在原来的设定集合中里头加入新的参数』
+									-+ ： 表示后面的设定为『在原来的参数集合中舍弃这里输入的参数！』
+				}
+				
+
+			
+3.改变启动等级(/etc/rc.d/rc(0-6).d/*)
+
+		chkconfig --list 				#列出所有的系统服务。
+		chkconfig --list mysqld 		#列出mysqld服务设置情况。		
+		chkconfig --add httpd 			#增加httpd服务的链接至/etc/rc.d/rc#.d/下。在init.d下的启动
+							脚本#chkconfig [runlevels(-:表示没有等级)] SS[关闭顺序] KK[启动顺序] 
+		chkconfig --del httpd 			#删除httpd服务。 
+		chkconfig --level httpd 2345 on #设置httpd在运行级别为2、3、4、5的情况下都是on（开启）的状态。  
+		chkconfig mysqld on 			#设定mysqld在各等级为on，“各等级”包括2、3、4、5等级。
+
+==============================================================================
+
+	有关独立服务启动(/etc/rc.d/init.d/serverName或/etc/init.d/*)
+	
+			service httpd [start|stop|restart|status]
+
+			
+==============================================================================
+
+	查看服务端口
+	
+		netstat   -l或--listening：显示监控中的服务器的Socket； 
+				  -n或--numeric：直接使用ip地址，而不通过域名服务器； 
+				  -p或--programs：显示正在使用Socket的程序识别码和程序名称； 
+				  -t或--tcp：显示TCP传输协议的连线状况； 
+				  -u或--udp：显示UDP传输协议的连线状况； 
+
+
+		
+		
