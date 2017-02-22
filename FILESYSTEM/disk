@@ -1,0 +1,155 @@
+								disk
+				
+1.简介
+		分区(文件系统):
+				a.Metadata(元数据区)
+					Block bitmap 记录哪个block是空闲的。bitmap每一个块大小对应一个数据块组
+							(当一个blocksize=1k,则一个bitmap可以管理1024*8个数据块)
+					Inode bitmap 记录哪个inode是空闲的。
+					Inode table 与每一个文件相对应,inode包含一些文件的信息单不包含文件名,其名字
+							保存在目录文件的内容中
+				
+				b.block(数据块区)
+						blocksize =1k   2k   4k
+						superblock:每个快组可能包含一个,(a.保存一个分区有多少块组,b.每个块组含
+						有多少块c.block的空闲与已用数,d.一个块的大小,e.inode的空闲与使用数,f.一个
+						valid bit 0表示未挂载)
+						GDT(Group description Table)：块描述表(每个块的起始与结束块)
+
+2.创建连接
+
+	ln SRC DEST  			创建硬链接
+	ln -s SRC DEST          创建软连接
+	
+	硬链接:指多个文件指向一个inode,权限相同
+			a.只能对文件创建,不能对目录创建
+			b.不能跨文件系统
+			c.创建硬链接会增加文件被连接的次数(-rw-r--r--.  1(硬链接次数) root root)
+	软链接:指一个文件指向另一个文件的路径,权限全是7,但最终取决于最终指向的文件
+			a.可应用于文件,可跨文件系统
+			b.其大小为文件路径的字符个数
+
+3.查看文件/磁盘大小
+
+	du -sh [dir/file] 			#-s只显示整个目录 -h作单位换算
+	df -h  						#显示磁盘的使用率
+	
+4.创建分区
+
+	fdisk -l    #查看系统的所有磁盘
+	
+	fdisk /dev/sdb  #创建文件系统
+	
+		p:显示分区表
+		n:新建一个分区
+		d:删除一个分区
+		a:设置启动区
+		w:保存退出
+		q:不保存退出
+		t:修改分区类型(L:显示所有类型)
+		l:显示所有类型
+		
+	partx /dev/sdb或partprobe   #通知内核重新读取分区表
+		
+		cat /proc/partitions #查看内核是否读取
+		
+
+5.格式化分区
+		=====================分区========================
+		
+		 cat /proc/filesystems   #查看内核支持的文件系统
+		
+		 mke2fs  [options]  /dev/sdb1
+				-b<区块大小>：指定区块大小，单位为字节； 
+				-L<标签>：设置文件系统的标签名称； 
+				-m<百分比值>：指定给管理员保留区块的比例，预设为5%； 
+				-r：指定要建立的ext2文件系统版本； 
+				-j:指定要建立的ext3文件系统版本；
+				-t:指定分区类型
+		
+		
+		===================卷标===========================
+		
+		e2label  /dev/sdb1  newLabel   #设置设备卷标
+		e2label  /dev/sdb1			   #查看设备卷标
+		
+		blkid /dev/sdb1
+				显示文件系统type与uuid及label
+				
+		================调整分区=============================
+		
+		tune2fs [options]  /dev/sdb1
+			-c：调整最大加载次数(0表示关闭)；
+			-i：设置相邻两次文件系统检查的相隔时间(0表示关闭)； 
+			-j：为“ext2”文件系统添加日志功能，将其转换为“ext3”文件系统； 
+			-L：设置文件系统卷标； 
+			-m：设置文件保留块的百分比；  
+		
+		dumpe2fs /dev/sdb1  #显示文件系统属性
+			-h  #只显示superblock
+			
+	
+	    =================检查并修复==========================
+		
+		fsck 用于检查并且试图修复文件系统中的错误。
+			
+			fsck -a /dev/sdb2 fsck  #前请先umount partitions
+			
+			e2fsck   -f(强制检查) -a(自动修复)  /dev/sdb2 
+
+
+6.分区挂载
+
+		================挂载===============================
+			
+			mount   [options]    [/dev/sdb1|leble]   /mnt
+			
+			-l：显示已加载的文件系统列表； 
+			-n：mount默认挂载后会写入/etc/mtab,但此不写入文件“/etc/mtab”中的文件系统； 
+			-r：将文件系统加载为只读模式； 
+			-a：加载文件“/etc/fstab”中描述的所有文件系统
+			-t:指定文件系统类型
+			-w:读写模式
+			
+		
+		/etc/mtab:每次挂载都会写到此文件
+		/etc/fstab:系统初始化会自动加载文件系统
+		
+			UUID=2ae71171-e7a7-45a3-92ff-c4625eab0388 /  ext4   defaults  1 1
+		
+		a.设备名LABEL=<label> or UUID=<uuid> or /dev/sdb1
+		b.挂载点
+		c.文件系统类型
+		d.挂载选项(默认defaults)
+		e.多少时间完全备份文件系统(0:不备份,1:每天备份,2:每两天备份..)
+		f.自测顺序(0:不检查,1:首先检查,2:稍后检查)
+		
+		
+		======================卸载===========================================
+		
+		umount [/dev/sdb1|/mnt]
+		
+		fuser -v /mnt  #查看正在此目录下的进程
+			-km         #杀死此目录下的进程 
+
+			
+
+7.swap分区与挂载
+
+		free 	#查看当前文件系统的内存与swap的使用空间
+		 -m #以m显示
+		 
+		 mkswap /dev/sdb2  #创建swap
+		 swapon /dev/sdb2  #挂载swap
+		 swapoff /dev/sdb2  #卸载swap
+		 
+		 
+8.备份
+
+	dd if=/path/src of=/path/dest bs=1024(默认byte也可指定M) count=2
+	
+	cp -a /path/src /dev/dest  
+
+
+	
+		 
