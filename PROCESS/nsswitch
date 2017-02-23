@@ -1,0 +1,74 @@
+			nsswitch   --------name service switch configuration
+					
+1.简介
+
+	规定通过哪些途径以及按照什么顺序通过这些途径来查找特定类型的信息。还可以
+	
+指定某个方法奏效或失效时系统将采取什么动作。
+
+		Info: method[action] method[action]...
+		
+2.Info(指定该行所描述的信息的类型)
+
+	
+	automount：自动挂载（/etc/auto.master和/etc/auto.misc）
+
+	bootparams：无盘引导选项和其他引导选项
+
+	ethers：MAC地址
+
+	group：用户所在组（/etc/group)
+
+	hosts：主机名和主机号（/etc/hosts)
+
+	networks：网络名及网络号（/etc/networks)
+
+	passwd：用户口令（/etc/passwd)
+
+	protocols：网络协议（/etc/protocols）
+
+	publickey：NIS+及NFS所使用的secure_rpc的公开密钥
+
+	rpc：远程过程调用名及调用号（/etc/rpc）
+
+	services：网络服务（/etc/services）
+
+	shadow：映射口令信息（/etc/shadow）
+
+	aiases：邮件别名
+	
+
+2.method(用来查找该信息的方法，调用/lib64/libnss_*.so动态文件)
+
+	
+	files：搜索本地文件，如/etc/passwd和/etc/hosts
+
+	nis：搜索NIS数据库，nis还有一个别名，即yp
+
+	dns：查询DNS（只查询主机）
+
+
+3.action(动作)
+
+		[[!]STATUS =action]
+		
+	(1)STATUS
+	
+		NOTFOUND：方法已经执行，但是并没有找到待搜索的值。 默认的动作是continue。
+
+		SUCCESS：方法已经执行，并且已经找到待搜索的值，没有返回错误。默认动作是return。
+
+		UNAVAIL：方法失败，原因是永久不可用。举例来说，所需的文件不可访问或者所需的服务器
+		
+可能停机。默认的动作是continue。
+
+		TRYAGAIN：方法失败，原因是临时不可用。举例来说，某个文件被锁定，或者某台服务器超载。
+
+默认动作是continue。
+
+	(2)action：
+
+		return：返回到调用例程，带有返回值，或者不带返回值。
+
+		continue：继续执行下一个方法。任何返回值都会被下一个方法找到的值覆盖。
+
