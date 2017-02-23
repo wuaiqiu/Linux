@@ -1,0 +1,97 @@
+						ssh     --------Secure SHell
+						
+1.客户端(openssh-clients)
+	
+		ssh:
+	
+			ssh ip							#进行登入远程主机
+			ssh userName@ip					#用userName身份进行登入远程主机
+			ssh -l userName ip				#用userName身份进行登入远程主机
+			ssh userName@ip 'COMMAND'		#不登入远程主机,执行某个命令(需要密码)
+			exit							#退出
+		
+	===========================================================
+	
+		sftp(传输的所有信息使用ssh加密的ftp):
+			
+			sftp ip							#进行登入远程主机
+			sftp userName@ip				#用userName身份进行登入远程主机
+			sftp -l userName ip				#用userName身份进行登入远程主机
+			bye								#退出
+	
+	
+	===========================================================
+		
+		ssh-add(专用密钥添加到ssh-agent的高速缓存):
+	
+			ssh-add  ~/.ssh/id_dsa      	#把专用密钥添加到 ssh-agent 的高速缓存中
+			
+			ssh-add -d ~/.ssh/id_xxx.pub 	#从ssh-agent中删除密钥
+
+			ssh-add -l						#查看ssh-agent中的密钥	
+			
+	============================================================
+		
+		ssh-agent(密钥管理器,可以实现来回切换):
+			
+			eval `ssh-agent`        		#运行ssh-agent
+	
+	
+	============================================================
+	
+		ssh-copy-id(复制秘钥):
+			
+			ssh-copy-id  -i  ~/.ssh/id_rsa.pub   userName@ip
+		
+				-i：指定公钥文件
+	
+	============================================================
+	
+		scp(文件复制):
+		
+			scp src dest      [scp userName@ip:[/path] /path]   [scp /path userName@ip:[/path]] 
+				-r :递归复制
+				-a :备份复制
+	
+2.服务器(openssh : 22/tcp )
+
+	ssh-keygen(秘钥生成工具):
+	
+		ssh-keygen  -t rsa   							 #生成一对秘钥 
+				
+				-t [ RSA|DSA ]  :指定要创建的密钥类型。
+				-C comment		:添加注释
+
+3.openssh-clients配置文件(/etc/ssh/ssh_config)
+
+		Host *							#"Host"只对匹配后面字串的计算机有效，“*”表示所有的计算机。
+		ForwardAgent no  				#设置连接是否经过验证代理
+		StrictHostKeyChecking no		#如果设为"yes"，ssh将不会自动把计算机的密匙加入
+						"$HOME/.ssh/known_hosts"文件，且一旦计算机的密匙发生了变化，就拒绝连接。
+		IdentityFile ~/.ssh/identity	#设置读取用户的RSA安全验证标识。
+		Port 22							#设置连接到远程主机的端口，ssh默认端口为22。
+				
+4.openssh配置文件(/etc/ssh/sshd_config)
+
+		Port 22								#端口号
+		Protocol 2							#版本号
+		ListenAddress 192.168.43.200		#监听地址
+		LoginGraceTime	2					#设置如果用户不能成功登录，在切断连接之前服务器需要
+											等待的时间（以秒为单位）
+		PermitRootLogin no					#是否允许root用户登录
+		MaxAuthTries	6             		#最大尝试次数
+		PrintMotd yes						#设置sshd是否在用户登录的时候显示“/etc/motd”中的信息。
+		LogLevel INFO						#设置记录sshd日志消息的层次。INFO是一个好的选择。
+		PermitEmptyPasswords no				#设置是否允许用口令为空的帐号登录。
+
+	
+5.ssh连接流程
+
+[wu] : ssh  ai@192.168.43.200
+	系统[添加/etc/ssh/ssh_host_rsa_key.pub到~.ssh/known_hosts中:用于认证远程主机]
+	
+[wu] : ssh-keygen -t rsa
+[wu] : ssh-copy-id -i .ssh/id_rsa.pub ai@192.168.43.200
+	系统[添加.ssh/id_rsa.pub的内容到/home/ai/.ssh/authorized_keys]
+			
+		
