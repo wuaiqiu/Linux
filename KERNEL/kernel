@@ -1,0 +1,118 @@
+						kernel			
+					
+1.简介
+	
+		编译到内核中（build-in）:在内核启动时就可以自动支持相应部分的功能，这样的优点是
+		
+方便、速度快，机器一启动，你就可以使用这部分功能了；缺点是会使内核变得庞大起来，不管你
+
+是否需要这部分功能，它都会存在
+
+		
+		编译成模块（module）:如果编译成模块，就会生成对应的.o文件，在使用的时候可以动态加载，
+		
+优点是不会使内核过分庞大，缺点是你得自己来调用这些模块。
+
+
+2.修改内核参数
+
+	用于在内核运行时动态地修改内核的运行参数，可用的内核参数在目录/proc/sys中
+	
+	sysctl	-a							#查看所有内核参数及其值
+	sysctl	-w kernel.hostname=wu		#临时改变参数值
+	sysctl	-p 							#重读/etc/sysctl.conf配置文件
+	
+
+	
+	/etc/sysctl.conf配置文件(可永久修改)
+	
+
+3.模块操作
+
+		lsmod				#用于显示已经加载到内核中的模块的状态信息
+		
+		insmod	/lib/modules/`uname -r`/kernel/arch/x86/kernel/microcode.ko	
+		
+							#用于加载模块，不能解决依赖关系
+		
+		rmmod	模块名		#用于卸载模块(不带.o或.ko后缀)
+		
+		
+		========================================================================
+		
+		modprobe(用于智能地向内核中加载模块或者从内核中移除模块,可解决模块依赖)
+		
+		
+			modprobe -l 		#显示所有的模块(/lib/modules/`uname -r`/kernel/*)
+			
+			modprobe 模块名		#用于加载模块(不带.o或.ko后缀)
+			
+			modprobe -r 模块名	#用于卸载模块(不带.o或.ko后缀)
+			
+
+4.设备驱动管理
+
+		lspci(显示当前主机的所有PCI总线信息，以及所有已连接的PCI设备信息)
+		
+		
+		
+		lsusb(用于显示本机的USB设备列表，以及USB设备的详细信息)
+		
+		
+5.编译内核
+
+		1.下载"development tools"软件组以及"ncurses-devel,openssl-devel"软件
+		
+		2.将源码解压到/usr/src/kernel/下
+		
+		2.make menuconfig (也可以在/boot/config-*的基础上编译)
+		
+		[*]		表示做进内核
+		[]		不启用做进功能
+		<M>		表示做为模块
+
+		3.make						#编译	
+		
+		4.make modules_install 		#安装模块
+			
+		5.make install				#安装内核相关文件,主要目的将所有的编译之后的内
+容拷贝安装到相应的目录。
+
+			a. 确实是缺少了某个module，其解决方法是：如果报的module对于你来说是有用，
+			检查编译kernel时的.config文件，加上对应的配置（配为=m），重新编译和安装
+			modules即可；如果你觉得这个module没啥用，大可不必管它了。
+
+			b.新编译的kernel已经将该选项编译进kernel了（.config中选择为=Y），从而不
+			需要生成这个module的.ko文件，系统找不到对应的.ko文件，但是已经在新内核中
+			了，不必理会这个报错。
+			
+			c.模块的名称变了，用当前系统lsmod命令查找的模块名称，在新编译的内核中找不
+			到module了
+		
+	
+	===========================================================================
+	
+	注意:
+		
+			make clean：清理大多数编译生成的文件，但会保留config文件等 
+			make mrproper: 清理所有编译生成的文件、 config及某些备份文件
+			make distclean： mrproper、 patches以及编辑器备份文件
+	
+	
+	部分编译
+	
+		make M=drives/net/			#只编译部分模块
+		make drives/net/pcnet.ko 	#只编译某一模块
+		make O=/tmp/kernel			#输出文件
+		
+		
+	.config文件
+		
+			Y－-将该功能编译进内核 
+　　		N－-不将该功能编译进内核 
+　　		M－-将该功能编译成可以在需要时动态插入到内核中的模块 
+
+				
+
+
+	
