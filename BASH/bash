@@ -73,3 +73,13 @@
 	
 		前一个命令的输出作为后一个命令的输入
 			COMMAND | COMMAND | ...
+
+9.配置文件
+
+	/etc/profile , /etc/profile.d/*.sh , /etc/bashrc	#全局配置
+
+	~/.bashrc , ~/.bash_profile				#局部配置
+
+	profile	: 主要用于环境变量设置,运行命令或脚本
+
+	bashrc	: 主要用于设置本地变量,定义命令别名
