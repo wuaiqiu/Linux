@@ -1,0 +1,51 @@
+					sudo
+					
+1.简介
+
+	不需要切换用户,能以另一个用户身份在指定的主机上运行某个命令
+	
+	sudo默认第一次需要输入密码,5分钟需要重新输入
+	
+2.配置文件(/etc/sudoers)
+
+	visudo：专用编辑器
+	
+	格式: WHO		WHICH_HOSTS=(RUN_AS)		COMMAND
+	
+	ALL:任意主机(用户)
+	
+	(1)WHO(需要执行的用户)
+		
+			a.用户名(如root)
+			b.用户别名,必须大写(User_Alias USERADMIN=root,wu)
+			c.组名(%root)
+			
+	(2)WHICH_HOSTS(需要执行的主机)
+	
+			a.主机名(如www.baidu.com)
+			b.ip(192.168.43.200)
+			c.主机别名,必需大写(Host_Alias HOSTNAMES=www.baidu.com)
+			
+	(3)RUN_AS(执行用户)
+	
+			a.用户名(如root)
+			b.用户别名,必须大写(User_Alias USERADMIN=root,wu)
+			c.组名(%root)
+			
+	(4)COMMAND(执行命令)
+	
+			a.命令路径(/bin/echo)
+			b.目录(执行此目录的所有命令)
+			c.命令别名，必须大写(Cnmd_Alias)
+			
+3.其他
+
+	sudo -l :查看当前用户所有使用的sudo命令
+	
+	sudo -k :可以让认证失效,下一次需要密码
+	
+	hadoop	ALL=(root)  NOPASSWD:/usr/sbin/useradd	#不需要密码执行(默认需要密码)
+		
+			
+	
+		
