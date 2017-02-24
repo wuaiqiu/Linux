@@ -1,0 +1,74 @@
+					grub     --------------GrandUnified Boot Loader
+
+1.简介
+
+		stage1 : 位于mbr上，引导stage1_5
+		stage1_5 :识别常见的操作系统
+		stage2:位于/boot/grub/*中,引导操作系统
+		
+		启动流程:
+		stage1(466byte)在磁盘第一扇区=====>>
+		stage1_5(512byte)在磁盘第二扇区======>>
+		stage2在/boot/grub/*中
+		
+2.安装grub
+		
+		(1)交互模式
+				grub
+			   >root (hd0,0)   		#表示换到第一块磁盘的第一个分区下(/boot所在的分区)
+			   >setup (hd0) 		#将stage1安装到第一块磁盘的BootLoader
+			   >quit				#退出
+			   
+		(2)直接安装
+		
+			grub-install  grub-install [--root-directory=/boot(boot的根文件)]  /dev/sda
+		
+					
+3.配置文件(/boot/grub/grub.conf)
+
+	default=0					#表示默认启动的第0号的操作系统,在GRUB中,
+								title定义了启动的操作系统,从第1个开始,GRUB中是0,
+								而第2个是1,依次类推...
+	
+	timeout=5					#表示的是出现GRUB界面后,无操作情况下进入default设定
+								的操作系统的时间,
+	splashimage=(hd0,0)/grub/splash.xpm.gz  #表示的是允许出现的GRUB背景的path
+ 	hiddenmenu						#表示隐藏GRUB的启动菜单,
+	titleCentOS (2.6.27)			#定义一个启动操作系统的名字
+		root (hdX,Y)				#boot所在的设备分区
+		kernel /vmlinuz-2.6.27  ro(ro表示只读)  root=/dev/VolGroup00/LogVol00(根文件系统)
+		rhgb(启动过程中用图形化界面显示启动信息) quiet(静默模式,不显示核心检测的信息)
+									#内核路径
+	    initrd /initrd-2.6.27.img   #initrd路径
+		
+4.相关修复
+
+	(1)当“/boot/grub/grub.conf”配置文件丢失，或者关键配置出现错误，
+	或者MBR记录中的引导程序遭到破坏时，Linux主机启动后可能只会出现“grub>”的提示符，
+	
+		>root (hd0,0)   (这是/boot所在的分区)
+		>kernel /vmlinuz-2.6.18-274.e15 ro root=LABEL=/ rhgb quiet (按tab键可补全)
+		>initrd  /initrd-2.6.18-274.e15.img
+		>boot (重启)
+		
+		重新配置grub.conf
+		
+	(2)grub rescue
+			
+		a.如果MBR扇区引导程序没有被损坏,重修grub.conf文件
+			sh-3.1#chroot	/mnt/sysimage //切换到待修复的Linux系统根环境
+			sh-3.1#mount
+			sh-3.1#vi	/boot/grub/grub.conf //重建grub.conf文件，
+			sh-3.1#exit//退出chroot环境
+			sh-3.1#exit//退出shsh-3.1环境，系统会自动重启
+		
+		b.如果MBR扇区引导程序被损坏，这时可以在急救模式的shell环境中重新安装grub
+			sh-3.1#chroot	/mnt/sysimage //切换到待修复的Linux系统根环境
+			sh-3.1#grub-install	/dev/hda // 重装grub
+			sh-3.1#exit	//退出chroot环境
+			sh-3.1#exit	//退出shsh-3.1环境，系统会自动重启
+		
+
+
+
+		
