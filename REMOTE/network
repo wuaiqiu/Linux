@@ -1,0 +1,58 @@
+						network
+				
+1.ping(用来测试主机之间网络的连通性)
+
+	ping [options] [address]
+	
+		-c n :次数
+		-w n :最大等待时间
+		
+
+2.ifconfig(临时配置和显示Linux内核中网络接口的网络参数)
+
+	ifconfig -a 					#显示所有网卡信息(lo:本地回环设备)
+	ifconfig ethX					#只显示ethx的信息
+	ifconfig ethX ip/mask  			#临时配置，重启或重启服务都失效
+	ifconfig ethX [up|down]			#启动或关闭网卡
+	
+
+3.ethX配置文件(/etc/sysconfig/network-scripts/ifcfg-ethx)
+
+	DEVICE=ethX										#关联的设备名称
+	BOOTRPOTO={static|none|dhcp|bootp}				#引导协议
+	IPADDR=192.168.43.200							
+	NETMASK=255.255.255.0
+	GATEWAY=192.168.43.1
+	ONBOOT={yes|no}  								#是否开机只启动
+	HWADDR=00:0C:29:61:12:16						#mac地址
+	
+	配置完后需要重启网络服务
+	
+		service network restart
+	
+4.route(显示并临时设置Linux内核中的网络路由表)
+
+
+	==================显示=======================================
+	
+		route -n    			#以数值显示路由表
+			
+			Flags标志说明： 
+				U Up表示此路由当前为启动状态。 
+				H Host，表示此网关为一主机。 
+				G Gateway，表示此网关为一路由器。 
+				R Reinstate Route，使用动态路由重新初始化的路由。 
+				D Dynamically,此路由是动态性地写入。 
+				M Modified，此路由是由路由守护程序或导向器动态修改。 
+				! 表示此路由当前为关闭状态。
+				
+	
+	=======================操作====================================
+	
+		route add -net 224.0.0.0 netmask 240.0.0.0 gw 192.168.43.1 dev eth0  
+							#增加一条到达244.0.0.0的路由。
+		
+		route add -net 224.0.0.0 netmask 240.0.0.0 reject
+						#增加一条屏蔽的路由,目的地址为224.x.x.x将被拒绝。
+	
+		route del -net 224.0.0.0 netmask 240.0.0.0   #删除一条路由
