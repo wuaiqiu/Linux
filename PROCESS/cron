@@ -1,0 +1,93 @@
+						cron
+						
+1.at
+
+	服务软件at
+	服务端atd
+
+	(1)at:在未来的某个时间点执行一次某任务,执行结果以邮件形式发送
+		
+		at Time
+		at>COMMAND
+		at>ctrl+d
+		
+		Time格式
+		
+			10:20(HH:MM) 
+			DD.MM.YY
+			MM/DD/YY
+			now + 2minutes(hours,days,weeks)
+			
+	===============================================================
+	
+	at -l  #查看作业计划列表
+	at -d N  #取消未执行的作业号N的任务
+	
+	================配置文件=====================================
+	
+	/etc/at.allow  :能用at的用户
+	/etc/at.deny   :不能用at的用户
+	
+	注意:当两个文件同时存在,只有at.allow起作用
+	
+	
+	(2)batch：不需要指定时间,它会在系统空闲时执行
+	
+		batch
+		at>COMMAND
+		at>ctrl+d
+		
+2.cron
+
+	服务软件cronie
+	服务端crond
+	
+	(1)cron:周期性执行某个任务(结果以邮件形式发送)
+	
+		系统cron任务(/etc/crontab)
+		
+			基本格式 : [参数间必须使用空格隔开]
+			*　　*　　*　　*　　*　　user  command
+			分　 时　 日　 月　 周　 用户   命令
+
+			第1列表示分钟0～59 
+			第2列表示小时0～23（0表示0点）
+			第3列表示日期1～31
+			第4列表示月份1～12
+			第5列标识号星期0～6（0表示星期天）
+			第6列表示执行的用户
+			第7列要运行的命令
+		
+			
+			时间通配表示:
+				*			对应所有有效值
+				,			离散时间点取值
+				-			连续时间取值
+				*/#			每#执行一次
+		
+		用户cron任务(/var/spool/cron/uesrName)
+		
+			crontab -l   :列出当前用户的任务
+			crontab -e	 :编辑
+			crontab -r	 :移除所有任务
+			crontab -u userName :管理其他用户
+			
+	(2)anacron(cron的补充,它可以将以前未执行的任务再次恢复执行):
+		软件:cronie-anacron
+		服务端:crond
+			
+			配置文件(/etc/anacrontab)
+			
+				period(频率.天数) delay(延迟,分钟) job-identifier command 
+				
+				period:表示过去几天没有执行
+				delay:表示开机几分钟后执行
+				job-identifier:注释
+				command: 执行命令
+				
+				run-parts /etc/cron.daily #表示执行此目录下的所有脚本
+				
+				
+			文件/var/spool/anacron/*  用于记录最近一次执行的时间戳
+
+	
