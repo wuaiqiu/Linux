@@ -1,0 +1,23 @@
+						init
+					
+1.简介
+	
+	Linux下的进程初始化工具，init进程是所有Linux进程的父进程，它的进程号为1。
+
+init命令是Linux操作系统中不可缺少的程序之一，init进程是Linux内核引导运行的，
+
+是系统中的第一个进程。
+
+	流程: 
+	
+	/etc/inittab(Linux的运行等级)======>>>
+	/etc/rc.d/rc.sysinit(包括设定PATH、设定网络配置、启动swap分区、设定/proc等等)======>>
+	/etc/modules.conf文件或/etc/modules.d目录下的文件来装载内核模块========>>
+	/etc/rc.d/rc#(执行不同运行级别的脚本程序)========>>
+	/etc/rc.d/rc.local(在一切初始化工作后，Linux留给用户进行个性化的地方)
+	
+	软件:
+		upstart
+	
+2.
+	
