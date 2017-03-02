@@ -75,7 +75,7 @@
 
 		Port 22								#端口号
 		Protocol 2							#版本号
-		ListenAddress 192.168.43.200		#监听地址
+		ListenAddress 192.168.43.200		#监听地址(不写默认监听所有地址，写了只监听此地址，已发生错误)
 		LoginGraceTime	2					#设置如果用户不能成功登录，在切断连接之前服务器需要
 											等待的时间（以秒为单位）
 		PermitRootLogin no					#是否允许root用户登录
