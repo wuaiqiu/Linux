@@ -1,0 +1,78 @@
+							VNC   ------Virtual Network Console
+							
+							
+1.服务端
+
+			yum 	install 	tigervnc-server
+			
+			service vncserver [start|stop|restart|status]
+
+			
+2.安装xfce桌面
+
+		yum  groupinstall   'X window System'
+		
+		yum	install	epel-release-6-8.noarch.rpm
+						epel是centos等衍生发行版，用来弥补centos内容更新有时比较滞后
+						或是一些扩展的源没有。
+		
+		yum groupinstall xfce
+		
+		
+				
+		
+3.配置文件(/etc/sysconfig/vncservers)
+
+	VNCSERVERS="1:root 2：etl"
+
+	VNCSERVERARGS[1]="-geometry 1024x768 -nolisten tcp -nohttpd "
+
+	VNCSERVERARGS[2]="-geometry 1024x768 -nolisten tcp -nohttpd "
+
+	
+	#VNCSERVERS 是用来设定可以使用VNC的服务器账号，可以设定多个，但是中间要用空格隔开。
+	
+	使用VNCVIEWER登录时，192.168.48.128:1表示是以root账号登录，以此类推。
+	
+	
+	#VNCSERVERARGS[n] 是设置vnc显示相关配置
+		
+			(1)-geometry 表示桌面分辨率，默认为1024x768，所以上面的1024x768也可以不写。
+
+			(2)-nohttpd  表示不监听HTTP端口（58xx）。
+
+			(3)-nolisten tcp 表示不监听TCP端口（60xx）
+
+			(4)-localhost 只运行从本机访问。
+
+			(5)AlwaysShared 默认只允许一个VNCVIEWER连接，此参数表示同一个显示端口允
+			
+			许多用户同时登录.
+
+			(6)-depth  表示色深，参数有8,16,24,32.
+
+			(7)SecurityTypes None 登录不需要密码认证
+			
+			
+			
+4.vncpasswd(给vnc用户设置密码)
+
+		vncpasswd root
+		
+		~/.vnc/passwd(已经转码)
+		
+		
+5.启动脚本(~/.vnc/xstartup)
+
+	#!/bin/sh
+	# Uncomment the following two lines for normal desktop:
+	unset SESSION_MANAGER
+	#exec /etc/X11/xinit/xinitrc
+	[ -x /etc/vnc/xstartup ] && exec /etc/vnc/xstartup
+	[ -r $HOME/.Xresources ] && xrdb $HOME/.Xresources
+	xsetroot -solid grey
+	vncconfig -iconic &
+	#xterm -geometry 80x24+10+10 -ls -title "$VNCDESKTOP Desktop" &
+	#twm &				#系统默认的窗口管理器
+	startxfce4 &		#以xfce4桌面启动
+	
