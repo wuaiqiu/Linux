@@ -1,0 +1,82 @@
+						wifi
+
+
+
+1.安装软件
+
+
+		wireless-tools	#支持wep
+		wpa_supplicant	#支持wpa/wpa2
+
+		
+2.步骤
+
+	(1).查看是否有无线网卡的接口
+	
+			iwconfig
+			
+	(2).查看需要连接的无线网络
+	
+			iw dev wlan0 scan
+			
+	(3)连接wifi
+	
+		1)没有加密
+		
+			iw dev wlan0 connect [网络 SSID]
+			
+			
+		2)wep加密
+		
+			iw dev wlan0 connect [网络 SSID] key 0:[WEP 密钥]
+			
+		3)wpa/wpa2加密
+		
+			
+			《更改wpa_supplicant配置文件》
+	
+			/etc/wpa_supplicant/wpa_supplicant.conf
+			
+				network={    
+				ssid="[网络 ssid]"    
+				psk="[密码]"
+				scan_ssid=1				#如果你的无线接入点是隐藏的，那么这个就是必须的，
+				proto=[RSN|WPA]  		#加密类型RSN(wpa2),WPA(wpa)
+				}
+				
+			《连接wifi》
+	
+			wpa_supplicant -i wlan0 -c /etc/wpa_supplicant/wpa_supplicant.conf
+			
+				-d ：增加调试信息
+				-i ：指定网络接口名称
+				-c ：wpa_supplicant的配置文件path
+			
+			《获得ip》	
+			
+			ifconfig wlan0 192.168.43.201/24
+			
+		4)如果想要开机就自动连接wifi的话
+		
+			/etc/sysconfig/network-scripts/ifcfg-wlan0
+			
+				ONBOOT=yes
+				NM_CONTROLLED=yes
+				BOOTPROTO=[dhcp|static]
+				IPADDR=192.168.0.201
+				NETMASK=255.255.255.0
+				GATEWAY=192.168.0.1
+				
+			/etc/rc.d/rc.local
+			
+			wpa_supplicant -i wlan0 -c /etc/wpa_supplicant/wpa_supplicant.conf>>null &
+			
+			
+3.其他命令
+
+	   iw dev wlan0 link					#查看wlan0网口无线网络连接情况
+	   
+	   wpa_passphrase TPLINK 12345678 >>/etc/wpa_supplicant/wpa_supplicant.conf   
+										#自动生产ssid与密码
+
+			
