@@ -1,0 +1,304 @@
+								postfix
+								
+								
+
+1.简介
+		
+		SMTP（Simple Mail Transfer Protocol）即简单邮件传输协议,它用于发信息
+
+		POP3（Post Office Protocol - Version 3）即邮局协议版本3。它用于收信息
+
+		IMAP4（Internet Message Access Protocol 4）即交互式数据消息访问协议第四个版本。
+		
+它用于收信息
+
+
+=================================传递过程========================================
+
+		MUA：Mail User Agent，邮件用户代理,主要的功能就是收受邮件主机的电子邮件，以及提供
+		
+		用户浏览与编写邮件的功能,如Outlook，Foxmail等
+		
+		MTA：Mail Transfer Agent，邮件传输代理，传递邮件,Sendmail和Postfix就是扮演MTA的角色。
+		
+		MDA：Mail Delivery Agent，邮件投递代理，分析由 MTA 所收到的信件表头或内容等数据， 
+		
+		来决定这封邮件的去向。此外，MDA 还有分析与过滤邮件的功能喔
+		
+		Mailbox：电子邮件信箱,Linux 系统默认的信箱都是放在 /var/spool/mail/使用者账号中.若
+		
+		MTA所收到的信件是本机的使用者，MDA 就会将信件送到该 mailbox 当中去啰！
+		
+		MRA ：Mail Retrieval Agent，使用者可以透过 MRA 服务器用pop3与imap4来收下自己的信件，
+
+		
+		
+		发件人：MUA --发送--> MTA -> 若干个MTA... -> MTA -> MDA->mailbox <--收取（MRA）-- MUA：收件人
+		
+		
+2.所需软件
+
+		(1)邮件服务器
+				postfix发送邮件服务器
+				dovecot是一个开源的IMAP和POP3邮件服务器(dovecot-devel dovecot-mysql pam-devel)
+		
+		(2)sasl认证
+				cyrus-sasl(Simple Authentication Security Layer)简单认证安全层, SASL主要是用
+		于SMTP认证。而cyrus-sasl在OS里面，saslauthd是其守护进程
+			
+		日志文件(/var/log/maillog)
+	
+3.cyrus-sasl配置文件
+
+	=======================================
+		/etc/sysconfig/saslauthd
+		
+		SOCKETDIR=/var/run/saslauthd
+		MECH=[shadow|pam]		#验证方式
+		
+		
+	========================================
+		 /etc/sasl2/smtpd.conf(配置postfix后启动会自动生成)
+		 
+		 pwcheck_method: saslauthd
+		 mech_list: plain login
+		 log_level: 3
+		 
+		 
+	测试
+		testsaslauthd -u root -p '123456'
+		
+	
+4.postfix配置(25/tcp)
+
+	============================================
+	/etc/postfix/master.cf(用于控制启动其他进程)
+	
+	
+	=============================================
+	/etc/postfix/main.cf(各功能的配置)
+	
+	(1)myorigin=$myhostname				#参数用于指定该服务器使用哪个域名来发邮件
+	
+	(2)mydestination = $myhostname localhost.$mydomain		#用于指定该服务器的使用哪个域名来接收邮件。
+	
+	(3)notify_classes=resource, software		#系统故障报告,该参数用于告知系统，在哪种情况下用
+												哪种方式通知用户
+													bounce 邮件原封不动弹回；
+　　												2bounce 将双份弹回邮件发送给Postmaster;
+　　												delay 将拖延的邮件的头部信息通知Postmaster;
+　　												policy 将被系统过滤掉的信息通知Postmaster;
+　　											    protocol 将协议错误信息通知Postmaster;
+　　												resource 将因系统资源短缺而投递失败的信息通知Postmaster;
+　　												software 将因软错误而投递失败的信息通知Postmaster.
+	
+	(4)myhostname = www.baidu.com 		#服务器所符合规则的域名全称
+	
+	(5)mydomain=baidu.com				#服务器所符合规则的域名
+　
+　　(6)mynetworks=168.100.189.0/28, 127.0.0.0/8 #设定的子网内部，邮件可以开放式转发
+
+	(7)inet_interfaces=all				#监听地址
+	
+	(8)default_process_limit = 50		#用于限定SMTP服务的最大同时连接数量。缺省为50
+	
+	(9)maximal_queue_lifetime=5		#用于设定队列处理程序对滞留邮件的最长保存期。缺省为5天。
+	
+	(10)smtpd_error_sleep_time = 5		#当SMTP服务端口接收到非法的命令时，系统将缓冲处理的时间间隔。
+										这个参数对于防止恶意攻击非常有效。
+	
+	(11)smtpd_soft_error_limit=10        #SMTP服务所允许的软错误次数。这个参数对于防止恶意攻击非常有效，
+										缺省10次。
+										
+	(12)smtp_hard_error_limit = 100		#SMTP服务所允许的硬错误次数
+	
+	(13)header_checks = regexp:/wdpost/filter/header_checks	#用于过滤邮件的头部信息。在文件header_checks
+															使用正则，如/^to: *friend@public\.com$/ REJECT
+	(14)smtpd_recipient_restrictions	#设定特殊的收件地址参数限制。
+											　check_relay_domains 检测转发域。
+　　										  permit_auth_destination 允许经过认证的目的地。
+　　										  reject_unauth_destination 拒绝未经过认证的目的地。
+　　										  permit_mx_backup 允许反查询MX主机名称。
+　　										  check_recipient_access maptype:mapname 根据mapname文件
+											  中设定的规则限制。
+													user@domain	OK
+													user@       OK
+													network/mask REJECT
+　　										  reject_unknown_recipient_domain 拒绝转发到没有DNS A或MX
+											  纪录的域名。
+　　										  reject_non_fqdn_recipient 拒绝不符合规则的转发目标。
+　　										  reject_unknown_sender_domain 拒绝没有IP反解析纪录的发件人域名。
+	(15)smtpd_sender_restrictions 		#设定发信地址必须符合的规则
+												reject_unknown_sender_domain 拒绝为没有DNS A或MX纪录的发信人域名。
+　　											check_sender_access maptype:mapname 根据mapname文件中的规则设定。
+　											  　reject_non_fqdn_sender 拒绝不符合规则的发信人地址。
+	
+	(16)smtpd_sasl_auth_enable=yes		#启动验证功能
+	
+	(17)smtpd_sasl_security_options=noanonymous	#安全选项，不允许匿名发送
+	
+	(19)broken_sasl_auth_clients=yes  #启动客户验证功能
+	
+	(20)smtpd_client_restrictions=permit_sasl_authenticated,reject		#客户限制
+
+	
+	
+5.dovecot配置(110/tcp)
+
+
+	==========================================
+	/etc/dovecot/dovecot.conf
+	
+	protocols = imap pop3				#使用的协议
+	listen = *							#监听ip地址,*表示任意
+	!include conf.d/*.conf
+	
+	
+	========================================
+	 /etc/dovecot/conf.d/10-auth.conf
+
+		disable_plaintext_auth = no		#禁止明文传输 
+		auth_mechanisms = plain login
+		!include auth-system.conf.ext
+		
+	=========================================
+	
+	/etc/dovecot/conf.d/10-mail.conf
+	
+	mail_location = mbox:~/mail:INBOX=/var/mail/%u	
+	
+	
+	还需切换到wu目录下
+	mkdir -p mail/.imap/INBOX
+	
+	=====================================
+	
+		/etc/dovecot/conf.d/10-ssl.conf
+		ssl = no		#禁用ssl认证
+	
+	
+6.postconf命令
+
+
+	postconf （postfix配置文件）
+		
+		-d 显示默认配置选项(即没有修改的配置)
+		-n 显示改动的配置选项
+		-e PARA=VALUE 修改某个属并保存到main.cf中
+	
+	postfix check		#检查main.cf配置文件
+	
+	
+7.发送与接受邮件
+
+	发送
+		
+		>telnet  192.168.43.200 25
+		>helo 192.168.43.200		#查找主机是否存在
+		>mail from:root@192.168.43.200
+		>rcpt to:root@192.168.43.200
+		>data...
+		>.	#结束
+		>quit
+	
+	LOGIN方式(openssl base64)
+
+		使用login方式的验证序列如下 （C：表示Client，S：表示Server）
+		C：auth login ------------------------------------------------- 进行用户身份认证 
+		S：334 VXNlcm5hbWU6 ----------------------------------- BASE64编码“Username:”
+		C：Y29zdGFAYW1heGl0Lm5ldA== ----------------------------------- 用户名，使用BASE64编码
+		S：334 UGFzc3dvcmQ6 -------------------------------------BASE64编码"Password:"
+		C：MTk4MjIxNA== ----------------------------------------------- 密码，使用BASE64编码
+		S：235 auth successfully -------------------------------------- 身份认证成功
+	
+	
+		
+	接受（root用户不能登入）
+	
+		>telnet 192.168.43.200 110
+		>user wu
+		>pass 123456
+		>list		#列出邮件
+		>retr n  	#取出第n封邮件
+		>quit
+		
+	
+8.postmap命令（将文件生成hash文件，便于查询）
+
+	# postmap sender_access
+	# postmap recipient_access
+				
+
+		
+10.编译安装postfix
+
+			====================配置cyrus-sasl=======================
+			./configure –prefix=/usr/local/sasl2          （注意使用续行符）
+			–disable-gssapi
+			–disable-anon
+			–disable-sample
+			–disable-digest
+			–enable-plain
+			–enable-login
+			
+			
+			============================================================
+			make makefiles 
+			'CCARGS(指定编译选项，告诉编译器到哪找系统头文件)
+			=-DHAS_MYSQL -I/usr/local/mysql/include(通用二进制编译mysql头文件路径)
+			-DUSE_SASL_AUTH 
+			-DUSE_CYRUS_SASL -I/usr/include/sasl  
+			-DUSE(让Postfix启用相应功能)_TLS '
+			'AUXLIBS(辅助库文件路径)
+			=-L/usr/local/mysql/lib -lmysqlclient
+			-lz -lm -L/usr/lib/sasl2 -lsasl2  -lssl -lcrypto'
+			
+
+
+11.mail	
+
+	 mail命令是命令行的电子邮件发送和接收工具。
+
+		mail [options] address
+		
+			-b<地址>：指定密件副本的收信人地址； 
+			-c<地址>：指定副本的收信人地址；  
+			-i：不显示终端发出的信息；  
+			-n：程序使用时，不使用mail.rc文件中的设置；  
+			-s<邮件主题>：指定邮件的主题； 
+			-u<用户帐号>：读取指定用户的邮件； 
+			-v：执行时，显示详细的信息。
+			
+		
+	(1)直接使用shell当编辑器,需要按CTRL+D结束输入
+
+		mail -s "Hello from linuxde.net by shell" admin@linuxde.net
+
+		hello,this is the content of mail. welcome to www.linuxde.net
+
+
+	(2)使用管道进行邮件发送 
+	
+		echo "hello,this is the content of mail.welcome to www.linuxde.net" | mail -s 
+		
+		"Hello from linuxde.net by pipe" admin@linuxde.net
+		
+	(3)使用文件进行邮件发送
+
+		mail -s "Hello from linuxde.net by file" admin@linuxde.net < mail.txt
+		
+	(4)要将消息 letter 发送到收件人 user1@host1 并抄送给 user2@host2 和 user3@host3
+
+		mail -c "user2@host2 user3@host3" user1@host1<letter
+		
+	mail配置文件(/etc/mail.rc)
+	set from=1351367889@qq.com       	#设置发件人
+	set smtp=smtp.qq.com             	#设置smtp服务器地址
+	set smtp-auth-user=1351367889     	#设置验证用户
+	set smtp-auth-password=123456      	#设置密码
+	set smtp-auth-login              	#验证登录
+
+
+			
+			
+		
