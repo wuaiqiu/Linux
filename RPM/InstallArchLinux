@@ -1,0 +1,273 @@
+							Install ArchLinux
+							
+							
+			
+1.UEFI
+
+		(1).制作启动盘
+		
+				a.先不要挂载U盘
+				b.格式化U盘
+					
+					mkfs.vfat -F32 /etc/sdb
+					
+				c.制作启动盘
+				
+					dd bs=4M if=/path/to/archlinux.iso of=/dev/sdx status=progress && sync
+					
+		(2)设置启动模式
+		
+				a.进入bios设置,uefi启动
+				b.开始安装
+		
+		(3)验证启动模式
+		
+					efivars-tester
+				
+		(4)连接到因特网
+
+			守护进程 dhcpcd 已被默认启用来探测有线设备, 并会尝试连接。如需验证网络是否正常, 
+		
+		可以使用 ping:
+					
+					ping www.baidu.com
+
+		(5)更新系统时间
+		
+			systemd-timesyncd 是一个用于跨网络同步系统时钟的守护服务。它实现了一个 SNTP 客户端。
+			  
+			  timedatectl set-ntp true	#设置系统时间
+			 
+			  timedatectl status		#检查服务状态
+			  
+			 
+		(6)建立硬盘分区
+		
+			a.fdisk /dev/sda
+			
+			b.设置gpt分区格式
+			
+			c.	sda1 #efi格式,500M
+				sda2 #linux,10G
+				sda3 #swap,4G
+				
+		(7)格式化分区
+	
+			mkfs.ext4 /dev/sda2
+			mkfs.vfat /dev/sda1
+			mkswpan /dev/sda3
+			
+		(8)挂载
+		
+			mount /dev/sda2 /mnt
+			mkdir /mnt/boot
+			mount /dev/sda1 /mnt/boot
+			swapon /dev/sda3
+			
+		(9)选择镜像源
+		
+			/etc/pacman.d/mirrorlist
+			
+		(10)安装基本系统
+		
+			pacstrap /mnt base base-devel
+			
+		(11)生成fstab
+		
+			 genfstab -U /mnt > /mnt/etc/fstab
+			 
+			 cat /mnt/etc/fstab	#查看fstab
+			 
+		(12)改变根目录
+		
+			 arch-chroot /mnt /bin/bash
+			 
+		(13)设置时区
+		
+			rm -rf /etc/localtime
+			ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+			
+			hwclock --systohc --utc
+		
+		(14)配置locale
+		
+			 nano /etc/locale.gen
+				
+				en_US.UTF-8 UTF-8
+				
+			 locale-gen		
+			 
+			 echo LANG=en_US.UTF-8 > /etc/locale.conf
+			 
+		(15)设置主机名
+		
+			echo wu > /etc/hostname
+			
+		(16)设置hosts
+		
+			/etc/hosts
+			
+			127.0.0.1	localhost.localdomain	localhost wu
+			::1		localhost.localdomain	localhost wu
+		
+		(17)生成ramdisk
+		
+			 mkinitcpio -p linux
+			 
+		(18)设置root密码
+		
+			passwd
+			
+		(19)安装引导程序
+		
+			 pacman -S grub-bios efibootmgr
+			 
+			 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=arch_grub 
+			 
+			 grub-mkconfig -o /boot/grub/grub.cfg 	#生成主配置文件
+			 
+			 cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo  /boot/grub/locale/en.mo
+							 
+							 
+		(20)卸载并重启
+		
+			 umount -R /mnt
+			 
+			 reboot
+			 
+			 
+2.Lengcy Bios
+
+		(1).制作启动盘
+		
+				a.先不要挂载U盘
+				b.格式化U盘
+					
+					mkfs.vfat -F32 /etc/sdb
+					
+				c.制作启动盘
+				
+					dd bs=4M if=/path/to/archlinux.iso of=/dev/sdx status=progress && sync
+					
+		(2)设置启动模式
+		
+				a.进入bios设置,Lengcy Bios启动
+				b.开始安装
+		
+				
+		(3)连接到因特网
+
+			守护进程 dhcpcd 已被默认启用来探测有线设备, 并会尝试连接。如需验证网络是否正常, 
+		
+		可以使用 ping:
+					
+					ping www.baidu.com
+
+		(4)更新系统时间
+		
+			systemd-timesyncd 是一个用于跨网络同步系统时钟的守护服务。它实现了一个 SNTP 客户端。
+			  
+			  timedatectl set-ntp true	#设置系统时间
+			 
+			  timedatectl status		#检查服务状态
+			  
+			 
+		(5)建立硬盘分区
+		
+			a.fdisk /dev/sda
+			
+			b.设置gpt分区格式
+			
+			c.	sda1 #linux,500M
+				sda2 #linux,10G
+				sda3 #swap,4G
+				
+		(6)格式化分区
+	
+			mkfs.ext4 /dev/sda2
+			mkfs.ext4 /dev/sda1
+			mkswpan /dev/sda3
+			
+		(7)挂载
+		
+			mount /dev/sda2 /mnt
+			mkdir /mnt/boot
+			mount /dev/sda1 /mnt/boot
+			swapon /dev/sda3
+			
+		(8)选择镜像源
+		
+			/etc/pacman.d/mirrorlist
+			
+		(9)安装基本系统
+		
+			pacstrap /mnt base base-devel
+			
+		(10)生成fstab
+		
+			 genfstab -U /mnt > /mnt/etc/fstab
+			 
+			 cat /mnt/etc/fstab	#查看fstab
+			 
+		(11)改变根目录
+		
+			 arch-chroot /mnt /bin/bash
+			 
+		(12)设置时区
+		
+			rm -rf /etc/localtime
+			ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+			
+			hwclock --systohc --utc
+		
+		(13)配置locale
+		
+			 nano /etc/locale.gen
+				
+				en_US.UTF-8 UTF-8
+				
+			 locale-gen		
+			 
+			 echo LANG=en_US.UTF-8 > /etc/locale.conf
+			 
+		(14)设置主机名
+		
+			echo wu > /etc/hostname
+			
+		(15)设置hosts
+		
+			/etc/hosts
+			
+			127.0.0.1	localhost.localdomain	localhost wu
+			::1		localhost.localdomain	localhost wu
+		
+		(16)生成ramdisk
+		
+			 mkinitcpio -p linux
+			 
+		(17)设置root密码
+		
+			passwd
+			
+		(18)安装引导程序
+		
+			 pacman -S grub-bios
+
+			grub-install /dev/sda
+			
+			cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo  
+								#据说这一步是为了解决一个一直未被修复的bug
+		
+			grub-mkconfig -o /boot/grub/grub.cfg
+							 
+							 
+		(19)卸载并重启
+		
+			 umount -R /mnt
+			 
+			 reboot
+
+	
+			
+			
+			 
