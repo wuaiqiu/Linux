@@ -1,0 +1,75 @@
+						telnet
+						
+
+						
+1.简介
+
+	Telnet协议是TCP/IP协议族中的一员，是Internet远程登陆服务的标准协议和主要方式。它为用户提供了
+	
+在本地计算机上完成远程主机工作的能力。在终端使用者的电脑上使用telnet程序，用它连接到服务器。终端
+
+使用者可以在telnet程序中输入命令，这些命令会在服务器上运行，就像直接在服务器的控制台上输入一样。
+
+可以在本地就能控制服务器。要开始一个 telnet会话，必须输入用户名和密码来登录服务器。
+
+　  Telnet是常用的远程控制Web服务器的方法。但是，telnet因为采用明文传送报文，安全性不好，很多Linux服
+
+务器都不开放telnet服务，而改用更安全的ssh方式了。root用户默认不能登入系统
+
+	 telnet命令还可做别的用途，比如确定远程服务的状态，比如确定远程服务器的某个端口是否能访问
+	 
+	 软件 telnet-server(23/tcp)  telnet-client
+	 
+	 telnet依赖于xinetd所以配置文件/etc/xinetd.d/telnet
+	
+	
+			
+2.telnet下常用命令
+
+		telnet ip [port]  默认为23
+
+		open : 使用 openhostname 可以建立到主机的 Telnet 连接。
+		close : 使用命令 close 命令可以关闭现有的 Telnet 连接。
+		display : 使用 display 命令可以查看 Telnet 客户端的当前设置。
+		send : 使用 send 命令可以向 Telnet 服务器发送命令。支持以下命令：
+				ao : 放弃输出命令。
+				ayt : “Are you there”命令。
+				esc : 发送当前的转义字符。
+				ip : 中断进程命令。
+				synch : 执行 Telnet 同步操作。
+				brk : 发送信号。
+				
+		exit : 退出
+				
+　	  上表所列命令以外的其他命令都将以字符串的形式发送至 Telnet 服务器。
+	
+	
+	
+3.dos常用命令	
+	
+			dir 		#主要用来显示一个目录下的文件和子目录。 
+				/a 		#显示隐藏文件 
+
+			md 			 #创建一个子目录 
+			rd 			 #删除空子目录
+			deltree  	 #删除非空目录 			
+			cd  		 #改变或显示当前目录
+			echo 12>a.txt#创建文件		
+			copy 		 #复制一个或一组文件到指定的磁盘或目录中
+			move 		 #把一个文件移动到另一个地方。
+			del 		 #删除指定磁盘、目录中的一个或一组文件 
+			ren 		 #对指定磁盘、目录中的一个文件或一组文件更改名称 
+			type 		 #在屏幕上显示文本文件内容命令 
+			 
+			 
+			cls  		 #清除显示器屏幕上的内容
+			time 		 #显示和设置DOS的系统时间 
+			
+			
+			net user 	 #查看用户
+			net user xiaochina xiaochina /add	#添加xiaochina用户密码为xiaochina
+			net localgroup administrators xiaochina /add #把xiaochina添加到系统用户组（提升权限） 
+			net user xiaochina /del				#将用户名为abcd的用户删除
+			net user abcd /active:no			#将用户名为abcd的用户禁用。 
+　　		net user abcd /active:yes			#激活用户名为abcd的用户。 
+			
