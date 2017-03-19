@@ -1,0 +1,309 @@
+						Nginx
+						
+
+
+						
+1.简介
+
+		Nginx ("engine x") 是一个高性能的静态HTTP和反向代理服务器，也是一个IMAP/POP3/SMTP服务器。
+		
+其特点是占有内存少，并发能力强
+
+
+
+
+
+
+2.安装nginx
+
+	[nginx]
+	name=nginx repo
+	baseurl=http://nginx.org/packages/mainline/centos/6/$basearch/
+	gpgcheck=0
+	enabled=1
+	
+	yum install nginx
+
+	
+	
+	
+3.配置文件
+
+	/etc/nginx/nginx.conf
+	
+	
+	
+	user nobody nobody;							#定义Nginx运行的用户和用户组
+
+	worker_processes 8;							#nginx进程数，建议设置为等于CPU总核心数。
+
+	error_log /var/log/nginx/error.log info;	#全局错误日志定义类型
+
+	pid /var/run/nginx.pid;						#进程文件
+
+	worker_rlimit_nofile 65535;					#一个nginx进程打开的最多文件描述符数目
+	
+	
+	events{
+	
+	worker_connections 65535;					#单个进程最大连接数（最大连接数=连接数*进程数）
+
+	}
+	
+	
+	https{										#设定http服务器
+	
+	include       /etc/nginx/mime.types;		#文件扩展名与文件类型映射表
+    default_type  application/octet-stream;		#默认文件类型
+	charset utf-8; 								#默认编码
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+												#日志格式
+
+    access_log  /var/log/nginx/access.log  main;
+												#访问日志
+    sendfile        on;							#开启高效文件传输模式，sendfile指令指定nginx是否调
+												用sendfile函数来输出文件，对于普通应用设为 on，如果
+												用来进行下载等应用磁盘IO重负载应用，可设置为off，以
+												平衡磁盘与网络I/O处理速度，降低系统的负载。注意：如
+												果图片显示不正常把这个改成off。
+    #tcp_nopush     on;							#防止网络阻塞
+
+    keepalive_timeout  65;						#长连接超时时间，单位是秒
+
+    #gzip  on;									#开启gzip压缩输出
+
+    include /etc/nginx/conf.d/*.conf;			#包含相关服务器配置
+	
+	
+	}
+	
+
+	
+	
+	
+4.nginx有关命令
+
+	nginx -t -c /etc/nginx/nginx.conf			#-t检测主配置文件是否有语法错误，然后退出
+												#-c设置主配置文件（默认是：/etc/nginx/nginx.conf）
+												
+	nginx -s reload|reopen|stop|quit  			#重新加载配置|重启|快速停止|完整退出nginx
+	
+
+	
+	
+	
+	
+5.静态HTTP服务器
+		
+
+		首先，Nginx是一个HTTP服务器，可以将服务器上的静态文件（如HTML、图片）通过HTTP协
+	
+议展现给客户端。
+
+		/etc/nginx/conf.d/www.conf
+		
+		server{
+
+			listen 80;							#监听端口号
+			server_name localhost;				#服务器的域名
+			location / {						#网页根目录
+
+				root	/usr/share/nginx/html; 	#静态文件路径
+				index   index.html;				#主页位置
+
+			}
+
+		}
+		
+
+		
+		
+		
+		
+6.反向代理服务器
+
+		客户端本来可以直接通过HTTP协议访问某网站应用服务器，网站管理员可以在中间加上一个Nginx，
+		
+客户端请求Nginx，Nginx请求应用服务器，然后将结果返回给客户端，此时Nginx就是反向代理服务器。
+
+		在进行Nginx+Tomcat时候遇到了这个权限问题，打开selinux设置
+			
+			setsebool -P httpd_can_network_connect 1
+
+			
+		server{
+
+			listen 80;
+
+			location / {
+
+			proxy_pass http://127.0.0.1:8080;	#应用服务器HTTP地址
+			proxy_redirect off;					#关闭代理重定向
+			proxy_set_header X-Real-IP $remote_addr;
+												#后端的Web服务器可以通过X-Forwarded-For获取用户真实IP
+			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+			proxy_set_header Host $host;
+			}
+
+		}
+		
+
+	
+
+
+	
+7.负载均衡
+
+		当网站访问量非常大，网站站长开心赚钱的同时，也摊上事儿了。因为网站越来越慢，一台服务器
+		
+已经不够用了。于是将同一个应用部署在多台服务器上，将大量用户的请求分配给多台机器处理。同时带
+
+来的好处是，其中一台服务器万一挂了，只要还有其他服务器正常运行，就不会影响用户使用。
+
+
+	==========================================================================================
+	
+		以上配置会将请求轮询分配到应用服务器，也就是一个客户端的多次请求，有可能会由多台不同的
+		
+	服务器处理。
+	
+		upstream	myapp {							# upstream位置应该放在http模块里面
+
+			server	192.168.20.1:8080;	# 应用服务器1
+
+			server	192.168.20.2:8080;	# 应用服务器2
+
+		}
+
+		server{
+
+			listen	80;
+
+			location / {
+
+			proxy_pass	http://myapp;
+
+			}
+
+		
+		
+		
+	======================================================================================
+	
+		可以通过ip-hash的方式，根据客户端ip地址的hash值将请求分配给固定的某一个服务器处理。
+		
+		
+		upstream myapp {
+
+				ip_hash;
+		# 根据客户端IP地址Hash值将请求分配给固定的一个服务器处理
+
+				server192.168.20.1:8080;
+
+				server192.168.20.2:8080;
+
+					}
+
+		server{
+
+			listen 80;
+
+		location / {
+
+			proxy_pass	http://myapp;
+
+			}
+
+		
+		
+		
+		
+	=========================================================================
+	
+		服务器的硬件配置可能有好有差，想把大部分请求分配给好的服务器，把少量请求
+		
+分配给差的服务器，可以通过weight来控制。
+		
+
+		upstream	myapp {
+
+			server192.168.20.1:8080 weight=3;
+			# 该服务器处理3/4请求
+
+			server192.168.20.2:8080;
+			# weight默认为1，该服务器处理1/4请求	
+		}
+
+		server{
+
+			listen 80;
+
+			location / {
+
+				proxy_pass	http://myapp;
+
+			}
+
+	
+
+	
+			
+8.过滤(访问时http://192.168.43.200/index.jsp)
+
+	让nginx进行转发，即所谓的反向代理。但实际上我们的需求不会是这样的，我们需要分文件类型来进行过滤，
+	
+比如jsp直接给tomcat处理，因为nginx并不是servlet容器，没办法处理JSP，而html,js,css这些不需要处理的，
+
+直接给nginx进行缓存。
+
+	注意
+		我们先要去掉之前配的location /，避免全部请求被拦截了。
+	
+	//正则
+	location ~ \.jsp$ {  
+			proxy_pass http://localhost:8080;  
+	}  
+          
+	location ~ \.(html|js|css|png|gif)$ {  
+		root D:/software/developerTools/server/apache-tomcat-7.0.8/webapps/ROOT;  
+	}  
+	
+	
+	
+	
+	
+9.FastCGI
+
+	Nginx不支持对外部程序的直接调用或者解析，所有的外部程序（包括PHP）必须通过FastCGI接口来调用。
+	
+FastCGI接口在Linux下是socket（这个socket可以是文件socket，也可以是ip socket）。为了调用CGI程序，
+
+还需要一个FastCGI的wrapper（wrapper可以理解为用于启动另一个程序的程序），这个wrapper绑定在某个
+
+固定socket上，如端口或者文件socket。当Nginx将CGI请求发送给这个socket的时候，通过FastCGI接口，
+
+wrapper接收到请求，然后派生出一个新的线程，这个线程调用解释器或者外部程序处理脚本并读取返回数据；
+
+接着，wrapper再将返回的数据通过FastCGI接口，沿着固定的socket传递给Nginx；最后，Nginx将返回的数据
+
+发送给客户端。这就是Nginx+FastCGI的整个运作过程
+
+
+
+	http{
+	
+	#FastCGI相关参数是为了改善网站的性能：减少资源占用，提高访问速度。
+		fastcgi_connect_timeout 300;
+		fastcgi_send_timeout 300;
+		fastcgi_read_timeout 300;
+		fastcgi_buffer_size 64k;
+		fastcgi_buffers 4 64k;
+		fastcgi_busy_buffers_size 128k;
+		fastcgi_temp_file_write_size 128k;
+	}
+		
+		
+
+	
