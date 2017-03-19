@@ -1,0 +1,203 @@
+						CA
+
+
+						
+1.PKI
+
+	PKI 就是 Public Key Infrastructure ,既不是一个协议，也不是一个软件，它是一个标准，在这个标准
+	
+之下发展出的为了实现安全基础服务目的的技术统称为PKI。可以说CA(认证中心)是PKI的核心，而数字证书是
+
+PKI的最基本元素，还有如apache等服务器、浏览器等客户端、银行等应用，都是pki的组件。
+
+
+
+
+2.CA
+
+	CA 机构，又称为证书认证中心 (Certificate Authority) 中心，是一个负责发放和管理数字证书的第三方
+	
+权威机构，它负责管理PKI结构下的所有用户(包括各种应用程序)的证书，把用户的公钥和用户的其他信息捆绑在
+
+一起，在网上验证用户的身份。
+
+	(1)证书的颁发：接收、验证用户(包括下级认证中心和最终用户)的数字证书的申请。可以受理或拒绝
+	
+	(2)证书的更新：认证中心可以定期更新所有用户的证书，或者根据用户的请求来更新用户的证书
+
+	(3)证书的查询：查询当前用户证书申请处理过程；查询用户证书的颁发信息，这类查询由目录服务器ldap来
+	
+完成
+	
+	(4)证书的作废：由于用户私钥泄密等原因，需要向认证中心提出证书作废的请求；证书已经过了有效期，
+	
+认证中心自动将该证书作废。认证中心通过维护证书作废列表 (Certificate Revocation List,CRL) 来完成上
+
+述功能。
+
+	(5)证书的归档：证书具有一定的有效期，证书过了有效期之后就将作废，但是我们不能将作废的证书简单地
+	
+丢弃，因为有时我们可能需要验证以前的某个交易过程中产生的数字签名，这时我们就需要查询作废的证书。
+
+
+
+
+3.ssl公钥证书格式(.crt)
+
+		
+		(1). 证书版本号(Version):版本号指明X.509证书的格式版本，现在的值可以为:
+						1) 0: v1
+						2) 1: v2
+						3) 2: v3
+
+
+		(2). 证书序列号(Serial Number):序列号指定由CA分配给证书的唯一的"数字型标识符"。
+		
+	当证书被取消时，实际上是将此证书的序列号放入由CA签发的CRL中，这也是序列号唯一的原因。
+
+		(3). 签名算法标识符(Signature Algorithm):签名算法标识用来指定由CA签发证书时所使用
+		
+	的"签名算法"。
+
+		(4). 签发机构名(Issuer):此域用来标识签发证书的CA的X.500 DN(DN-Distinguished Name)名字。
+	包括:
+			1) 国家(C)
+			2) 省市(ST)
+			3) 地区(L)
+			4) 组织机构(O)
+			5) 单位部门(OU)
+			6) 通用名(CN)
+			7) 邮箱地址
+
+		(5). 有效期(Validity):指定证书的有效期，包括:
+						1) 证书开始生效的日期时间
+						2) 证书失效的日期和时间
+
+		(6). 证书用户名(Subject):指定证书持有者的X.500唯一名字。包括:
+			1) 国家(C)
+			2) 省市(ST)
+			3) 地区(L)
+			4) 组织机构(O)
+			5) 单位部门(OU)
+			6) 通用名(CN)
+			7) 邮箱地址
+
+		(7). 证书持有者公开密钥信息(Subject Public Key Info)
+
+		(8). 扩展项(extension)
+
+		(9). 签发者唯一标识符(Issuer Unique Identifier):签发者唯一标识符在第2版加入证书定义中。
+		
+	此域用在当同一个X.500名字用于多个认证机构时，用一比特字符串来唯一标识签发者的X.500名字。可选。
+
+		(10). 证书持有者唯一标识符(Subject Unique Identifier):持有证书者唯一标识符在第2版的标准中
+		
+	加入X.509证书定义。此域用在当同一个X.500名字用于多个证书持有者时，用一比特字符串来唯一标识证书
+	
+	持有者的X.500名字。可选。
+
+		(11). 签名算法(Signature Algorithm):证书签发机构对证书上述内容的签名算法
+
+		(12). 签名值(Issuer's Signature):证书签发机构对证书上述内容的签名值
+		
+		
+
+4.颁发证书
+
+	=======================CA==================================================
+	
+	(1)修改CA的一些配置文件
+	
+		/etc/pki/tls/openssl.cnf
+		
+		[ CA_default ]
+		dir             = /etc/pki/CA           #CA主目录
+		certs           = $dir/certs            #证书列表
+		crl_dir         = $dir/crl              #吊销证书列表
+		new_certs_dir   = $dir/newcerts         #新证书的保存位置
+		serial          = $dir/serial           #证书的序列号
+		crlnumber       = $dir/crlnumber        #吊销证书的序列号
+		certificate     = $dir/cacert.pem       #CA根证书
+		private_key     = $dir/private/cakey.pem #CA私钥
+		default_days    = 365                   # 证书保存天数
+		database        = $dir/index.txt        #数据库索引.
+		
+		
+		[ policy_match ]					#客户证书可以随机
+		countryName             = optional
+		stateOrProvinceName     = optional
+		organizationName        = optional
+
+
+	(2).创建相关文件与目录(与配置文件相对应)
+	
+			mkdir certs crl newcerts private
+	
+			touch index.txt serial
+			echo 01 > serial
+
+	(3).生成根密钥(生成私钥,私钥的文件名与存放位置要与配置文件中private_key的设置相匹配)
+	
+			openssl genrsa -out private/cakey.pem 2048
+			
+			 2048：表示生成2048位的密码
+			
+	(4).生成根证书(自签证书的存放位置也要与配置文件中certificate的设置相匹配)
+	
+			openssl req -new -x509 -key private/cakey.pem -out cacert.pem
+			
+					-new：表示生成一个新证书签署请求
+
+					-x509：专用于CA生成自签证书，如果不是自签证书则不需要此项
+
+					-key：生成请求时用到的私钥文件
+
+					-out：证书的保存路径
+
+					-days：证书的有效期限，单位是day（天），默认是365天
+					
+	==================================Nginx web==============================================
+	
+	(5).nginx web服务器生成ssl密钥
+	
+			 openssl genrsa -out nginx.key 2048
+			 
+	(6).为nginx生成证书签署请求
+	
+			 openssl req -new -key nginx.key -out nginx.csr 
+	
+	==================================CA====================================================
+	
+	(7).私有CA根据请求来签署证书
+	
+			openssl ca -in nginx.csr -out /etc/pki/CA/certs/nginx.crt
+			
+			openssl x509 -in /etc/pki/CA/certs/nginx.crt -noout -text #查看certs列表
+			
+			
+	(8).吊销证书
+	
+	
+			openssl ca -revoke /etc/pki/CA/newcerts/01.pem
+			
+			echo 01 > /etc/pki/CA/crlnumber
+			
+			openssl ca -gencrl -out /etc/pki/CA/crl/nginx.crt		#更新证书吊销列表
+			
+			openssl crl -in /etc/pki/CA/crl/nginx.crt -noout -text	#查看crl列表
+			
+	================================浏览器===============================================
+	
+	(9)使用ssl证书(nginx.crt)
+	
+			将cacert.pem文件重命名cacert.crt放在浏览器受信任的根证书颁发机构
+	
+	
+	
+6.关于证书申请(cacert.pem)
+
+
+	如果你要自己做CA，别忘了客户端需要导入CA的证书（CA的证书是自签名的，导入它意味着你“信任”这个
+	
+CA签署的证书）。而商业CA的一般不用，因为它们已经内置在你的浏览器中了。
+
