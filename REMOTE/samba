@@ -1,0 +1,119 @@
+								samba
+								
+								
+1.简介
+
+	在Windows中借助netbios（广播方式，主要功能是主机名解析）,cifs（common internet file system）,
+	
+smb(service message block)来实现文件共享。
+
+
+	samba主要有两个进程：
+
+			nmbd(445/tcp)：模拟netbios的功能，让linux主机能出现在Windows主机上的网上邻居里
+
+			smbd(139/tcp)：实现文件共享功能
+			
+	yum install samba    		#安装服务端
+	yum install samba-client 	#安装客户端
+	
+
+2.配置文件（等号"="左右需要有空格）
+
+	/etc/samba/smb.conf
+	
+	[global]
+
+		workgroup = LinuxSir						#就是Windows中显示的工作组
+	    server string = Linux Samba Server TestServer#就是Samba服务器说明，可以自己来定义
+		netbios name = LinuxSir05					#就是在Windows中显示出来的计算机名
+	    security = [share|user]						#这是验证和登录方式
+													如果用share，就是不用设置用户和密码
+													如果用user，就要设置系统用户和samba密码
+		log file=/var/log/samba/%m.log				#每个用户的日志位置
+		guest account = pcguest 					#让用户以pcguest身份匿名登录,但保证/etc/passwd
+													中有此人.
+		maxlog size=50								#日志最大为50kb,"0"代表无限制
+		
+	 [linuxsir]
+	 
+            path = /opt/linuxsir					#可以设置要共享的目录放在哪里
+            writeable = yes							#是否可写，这里我设置为可写
+            browseable = yes 						#是否可以浏览，可以浏览意味着，我们在工作组
+													下能看到共享文件夹。
+			read only = yes							#设置只读目录
+			comment = Home Directory				#注释
+			public = yes							#是否共享,若为否则进行身份验证(只有当
+													security = share 时此项才起作用)
+			vaild users = root 						#设定只有此名单内的用户才能访问共享资源
+													(用户名/@组名)
+			invalid users = root					#设定只有此名单内的用户不能访问共享资源
+													(用户名/@组名)
+			allow hosts = 192.168.0.1/24			#设定只有此网段/IP的用户才能访问共享资源
+
+			
+			
+			
+		testparm       #检测配置文件的语法错误
+		
+		smbpasswd -a root 		#从系统用户添加samba密码
+				  -d root		#冻结用户，就是这个用户不能在登录了
+				  -e root       #恢复用户，解冻用户，让冻结的用户可以在使用
+				  -n root    	#把用户的密码设置成空.
+		
+		
+3.smbclient
+
+
+		smbclient -L NetBios_Name	-U  username				#查看服务器已共享了哪目录
+		          -L  192.168.43.200
+			
+		smbclient  //192.168.43.200/test  -U username			#进入samba的交互模式
+				  
+		smb>command         #在共享目录下的命令
+		smb>!command        #在本地目录下的命令
+		
+		
+4.挂载
+	
+	[linux]
+
+	mount -t cifs //192.168.0.101/tools  /mnt  -o username=wu
+	
+	（1）、开启Guest账户，并留空Guest账户密码：在桌面，鼠标右键点击“计算机”，在下拉菜单中，
+	
+	再用鼠标左键点击“管理”，进入计算机管理界面：展开“本地用户和组”，点击“用户”，右键点击“Guest”，
+	
+	并点击“属性”，去除“账户已禁用”前面的小勾。
+
+	（2）、运行组策略（gpedit.msc）\本地计算机\计算机配置\windows设置\安全设置\本地策略\用户权限
+	
+	分配，双击“拒绝从网络上访问这台计算机”，删除项中的guest账户。
+
+	（3）、\本地计算机\计算机配置\windows设置\安全设置\本地策略\安全选项 更改“网络访问: 本地帐户
+	
+	的共享和安全模型”，设置为 仅来宾。
+
+	（4）、添加共享文件夹：共享时添加Guest账户即可。或者就添加“Everyone”。这样，局域网上其他电脑
+	
+	就可以直接访问在Windows7上的共享文件夹了。
+	
+	[windows]
+	
+	\\192.168.43.200\\share
+	
+	net use \\192.168.1.102\IPC$ /delete 	#删除上次连接的用户记录
+	
+	
+	
+5.Selinux
+		
+		setsebool -P samba_enable_home_dirs on			#设置samba可以共享用户家目录
+
+		chcon -t samba_share_t 	/share    				#设置用户新建目录的selinux安全上下文
+
+		setsebool -P samba_export_all_ro on
+		setsebool -P samba_export_all_rw on				#分享系统目录（root目录只读，读写）
+		
+		cp shell /var/lib/samba/scripts
+		restorecon -R -v /var/lib/samba/scripts			#扩展shell脚本
