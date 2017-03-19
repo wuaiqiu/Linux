@@ -1,0 +1,64 @@
+							makepkg
+							
+	
+	
+1.简介
+
+	makepkg是一个软件包自动编译脚本。使用时需要一个Unix环境和PKGBUILD.
+	
+2.命令
+
+	
+	a.base-devel组已安装
+	
+	b.获取PKGBUILD压缩包
+	
+	c.进入此压缩包
+	
+	d.makepkg -s	#编译软件包然后自动安装必须的依赖
+	
+	#由makepkg调用并执行。这些函数可以调用任何命令，可能包含恶意或危险代码。makepkg通过fakeroot
+	（意为“假root”）执行这些命令(所以不要以root用户运行makepkg)，能在一定程度防止恶意代码损坏系统
+	
+	e.生成软件包
+		 source 里的内容下载了源代码文件
+		 把源代码文件解压缩到src
+		 按照 build() 里的内容编译源代码，并把编译好的内容放在pkg 里
+		 把pkg 里面的内容打包形成 *.pkg.tar.gz
+	
+	f.安装软件包makepkg -i
+	
+	h.清空残余的文件和目录  makepkg -c
+
+	
+	
+4.AUR
+
+	Arch用户软件仓库（Arch User Repository，AUR）是为用户而建、由用户主导的Arch软件仓库。
+	
+AUR中的软件包以软件包生成脚本（PKGBUILD）的形式提供，用户自己通过makepkg生成包，再由pacman
+
+安装。创建AUR的初衷是方便用户维护和分享新软件包，并由官方定期从中挑选软件包进入community仓库。
+
+	下载git仓库，即PKGBUILD
+
+	
+5.ABS
+
+
+	ABS(Arch Build System)指的是Arch的构建系统。这是一种从源代码编译软件的类 ports 系统。在Arch中，
+	
+pacman 专门管理二进制软件包(包括那些由ABS创建的)，而ABS则是一系列工具，负责把源代码编译成可安装的
+
+.pkg.tar.xz 软件包。
+
+
+
+	类系统：'Ports'是 *BSD 使用的一种系统，可以自动下载源代码、解压缩、打补丁、编译和安装。一个“port”
+	
+仅仅是指用户电脑上的一个目录，根据即将安装的相应软件来命名，包含一些文件来指导源码的下载和编译安装，
+
+典型的方式是找到那个目录(或者说port)，进行make或 make install clean，然后系统就会下载、编译和安装你
+
+想要的软件了。
+
