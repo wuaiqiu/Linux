@@ -1,0 +1,40 @@
+							https
+
+						
+1.生成CSR文件
+
+		 keytool -genkey -keyalg RSA -alias <your_alias_name> -keystore <your_keystore_name>
+		 -keysize 2048
+		 
+		 keytool -certreq -keyalg RSA -alias <your_alias_name>  -keystore <your_keystore_name>
+		-file certreq.csr
+		
+2.获取xxx.crt文件
+	
+
+3.把crt格式证书导入keystore文件
+
+		#导入ca根证书
+		keytool -import -trustcacerts -alias root -keystore <your_keystore_name>
+		-file certs.pem
+	
+		#导入自己的证书
+		keytool -import -trustcacerts -alias <your_alias_name> -keystore <your_keystore_name>
+		-file xxx.crt 
+		
+4.修改Tomcat配置 
+
+		将xxx.keystore文件放在tomcat目录下
+		
+		/usr/tomcat/conf/server.xml
+		
+		<Connector SSLEnabled="true" acceptCount="100" clientAuth="false"
+		disableUploadTimeout="true" enableLookups="false" maxThreads="25"
+		port="8443" keystoreFile="xxx.keystore" keystorePass="password"
+		protocol="org.apache.coyote.http11.Http11NioProtocol" scheme="https"
+		secure="true" sslProtocol="TLS" />
+		
+
+	
+
+		
