@@ -1,0 +1,103 @@
+							VPN
+
+							
+1.简介
+
+		VPN ，中文翻译为虚拟专有网络，英文全称是 Virtual Private Network 。现在 VPN 被普遍定义为通过 
+		
+一个公用互联网络建立一个临时的、安全的连接，是一条穿过混乱的公用网络的安全、稳定隧道，使用这条隧道可
+
+以对数据进行深度加密达到安全使用互联网的目的，被广泛使用企业办公当中。简单的说，VPN 就是为了大家在互
+
+联网的连接和使用中，开辟一条临时的通道，最大程度保证传输数据的便捷以及安全性。
+
+		
+		
+2.步骤
+
+		(1).安装pptpd,ppp
+		
+				yum install pptpd ppp
+				
+		(2)修改pptpd配置文件
+		
+		
+		
+		=============================================================================
+		
+				/etc/pptpd.conf
+				
+				localip 192.168.10.1			#localip 是指服务器的 IP 地址
+				remoteip 192.168.10.100-120		#remoteip 本服务器管理的客户端的地址
+		
+
+		================================================================================
+		
+				/etc/ppp/chap-secrets（添加用户和密码）
+				
+		VPN客户的用户名	服务名称	密码	IP地址范围
+				user1 	pptpd 		123 		*
+				user2 	pptpd 		123			*
+
+		==============================================================================
+		
+				/etc/ppp/options.pptpd（添加dns服务器）
+				
+				ms-dns 10.202.72.116
+				ms-dns 10.202.72.118
+				
+				
+		(3)启动pptpd(1723/tcp)服务
+		
+				service pptpd start
+			
+		(4)设置ip转发（出于安全考虑，Linux系统默认是禁止数据包转发的）
+		
+				/proc/sys/net/ipv4/ip_forward，
+				
+				#该文件内容为0，表示禁止数据包转发，
+				#1表示允许，将其修改为1
+				
+				===============================================
+				
+				vi /etc/sysctl.conf
+				net.ipv4.ip_forward = 1
+				sysctl -p		#修改生效
+				
+				
+				iptables -t nat -A POSTROUTING  -s 192.168.10.0/24 -o eth0 -j MASQUERADE 
+				
+				iptables -I INPUT -p tcp --dport 1723 -j ACCEPT
+
+				iptables -I INPUT -p gre -j ACCEPT		(GRE协议(第三层隧道协议))
+				
+				
+		(5)安装pptp客户端
+		
+			  yum install pptp
+			  
+		(6)验证内核是否加载了MPPE模块
+			MPPE(Microsoft Point-to-Point Encryption-微软点对点加密术）协议是由Microsoft设计的，
+			它规定了如何在数据链路层对通信机密性保护的机制。它通过对PPP链接中PPP分组的加密以及
+			PPP封装处理，实现数据链路层的机密性保护。
+		
+			 modprobe ppp-compress-18
+			  
+			  
+		(7)创建文件
+		
+			/etc/ppp/peers/pptpd（与chap-secrets服务名相等） 
+			
+			pty "pptp 127.0.0.1 --nolaunchpppd"
+			name user1
+			password 123
+			remotename pptpd
+			require-mppe-128
+			
+		(8)启动vpn
+		
+			pppd call pptpserver
+			
+		(9)查看是否成功
+		
+			ifconfig 是否有ppp设备
