@@ -1,0 +1,226 @@
+								grub2
+								
+								
+
+								
+一、grub2新特性
+
+	1、grub2和grub有很多不同的地方：
+		
+			a）图形接口
+
+			b）使用了模块机制，通过动态加载需要的模块来扩展功能
+
+			c）支持脚本语言，例如条件判断，循环、变量和函数
+
+			d）支持rescue模式，可用于系统无法引导的情况
+
+			e）国际化语言。包括支持非ASCII的字 符集和类似gettext的消息分类，字体，图形控制台等等
+
+			f）有一个灵活的命令行接口。如果没有配置文件存在，GRUB会自动进入命令模式
+
+			g）针对文件系统、文件、设备、驱动、终端、命令、分区表、os loder的模块化、层次化、基于
+			
+		对象的框架
+
+		    h）支持多种文件系统格式
+
+			i）可访问已经安装的设备上的数据
+
+			j）支持自动解压
+
+	2、设备的命名
+
+		grub2同样以fd表示软盘，hd表示硬盘（包含IDE和SCSI硬盘）。设备是从0开始编号，分区则是从1开始，
+		
+		(hd0,1)：表示BIOS中的第一个硬盘的第1个分区
+		(hd0,5)/boot/vmlinuz：表示BIOS中的第一个硬盘的第一个逻辑分区下的boot目录下的vmlinuz文件
+
+		
+
+二、grub2安装与启动
+
+	(1)grub默认安装在第一硬盘（hd0）的mbr，其实就是把引导文件boot.img写入硬盘的mbr，当然，用户也可
+	
+以选择不写入硬盘mbr而是写入linux分区的引导扇区。启动时根据mbr所提供信息找到启动分区后，加载分区内的
+
+grub核心文件core.img和配置文件grub.cfg，进入选择菜单画面，在菜单画面，按上下箭号选择需要系统菜单项，
+
+按Enter进入选项。
+
+	(2)按e进入己选择菜单的编辑状态，在编辑状态下，由上下左右箭号来移动光标，enter键换行，ctrl+x以编
+	
+辑的内容启动，ctrl+c进命令行状态，按Esc退出，回到菜单项。在需要使用额外的内核参数启动时，比如要加
+
+上acpi=off时，把光标移动到linux这一行最后，在splash后加上一空 格再输入acpi=off，然后按ctrl+x启动。
+
+	(3)按c进入命令行状态，按Tab键可查看所有可用的命令。
+	
+
+	
+三、grub2中一些常用的命令
+
+	1)help	查看命令用法，如
+
+		help search：查看search命令详细用法
+	
+	2)set	设置变量值，如
+
+		set default=0
+		set timeout=5
+		set root=(hd0,3)
+
+		需要调用变量AA的值时，使用${AA}
+		
+	3)default	定义默认引导的操作系统。
+		
+		0 表示第一个操作系统，1表示第2个，依此类推 
+		
+	4)timeout	定义在时间内用户没有按下键盘上的某个按键，自动引导default指定的操作系统。 
+	
+	5)root	指定用于启动系统的分区。
+
+	6)insmod和rmmod	加载或移除某模块，如
+	
+		insmod jpeg
+		insmod png
+
+	7)ls	列出当前的所有设备。
+	
+			ls -l		详细列出当前的所有设备。对于分区，会显示其label及uuid。
+			ls /		列出当前设为root的分区下的文件
+			ls (hd1,1)/	列出(hd1,1)分区根目录的文件
+	
+	8)linux	用linux命令取代grub中的kernel命令
+
+	9)chainloader	调用另一个启动器，如
+		
+		chainloader (hd0,1)+1
+
+		调用第一硬盘第一分区引导扇区内的启动器，可以是windows或linux的启动器
+		
+	10)initrd 相当于grub的initrd命令
+
+	
+	
+		
+四.grub2配置文件
+
+	grub2改用grub.cfg为配置文件，配置文件包含以下基本内容：
+
+===============BEGIN /etc/grub.d/00_header=====================================
+
+	load_env		#加载变量，如果在grubenv保存变量，则启动时装载
+
+	set default="0"	#设置默认引导项，默认值为0
+
+	insmod ext2		#插入文件系统支持的模块，除了用作启动的分区外，其他分区格式可在menuentry底下再添加
+
+	set root=(hd0,8)#指定系统root分区，也就是 / 分区
+
+	search --no-floppy --fs-uuid --set 2d61e5f9-1d2a-4167-a6f1-b991ba00878b
+
+			#指定 uuid=2d61e5f9-1d2a-4167-a6f1-b991ba00878b的分区为root分区，如果前面的分区号(hd0,8)
+			的uuid与这里的uuid一致，这两句作用一样，如果不一致，则指定uuid的起作用。
+			
+	if loadfont /usr/share/grub/unicode.pf2 ; then	#设置终端字体，unicode.pf2支持中文字符显示
+
+	set gfxmode=640x480		#设置显示分辨率，默认为640x480，可用800x600，1024x768
+
+	insmod gfxterm			#插入终端模块 gfxterm，支持中文字符显示和支持24位图像
+
+	insmod vbe					#插入vbe模块，GRUB2引入模块化机制，要使用它，需要在这里加入
+
+	if terminal_output gfxterm ; then true ; else
+
+	terminal gfxterm				#设定grub2终 端为gfxterm
+	fi
+	fi
+
+	set timeout=10				##设定默认启动前等待时间，默认为10秒
+	
+	
+========================= BEGIN /etc/grub.d/10_linux===========================
+
+	#linux为系统自动添加的当前root分区linux引导项
+	#每个菜单项要包括menuentry双引号" "和大括号{ }才完整，否则不显示菜单
+	menuentry "Ubuntu, Linux 2.6.31-10-generic" {
+
+		set quiet=1
+		insmod ext2
+		set root=(hd0,8)
+		search --no-floppy --fs-uuid --set 2d61e5f9-1d2a-4167-a6f1-b991ba00878b
+
+		#这句与set root=(hd0,8)效果一样，可删除其一，二者不一致以这句为准
+
+		linux /boot/vmlinuz-2.6.31-10-generic root=UUID=2d61e5f9-1d2a-4167-a6f1-b991ba00878b ro quiet splash
+		initrd /boot/initrd.img-2.6.31-10-generic
+	}
+	
+	
+========================================================================================
+	30_os-prober或30_others为系统自动查找并添加其他系统菜单项，按windows，linux，macos顺序
+	40_custom为自定义的启动项
+
+
+	
+	
+五、脚本修改
+
+	/etc/default/grub
+
+		GRUB_DEFAULT=0 	#设置默认启动项，按menuentry顺序。比如要默认从第四个菜单项启动，数字改为3
+		GRUB_TERMINAL=console #设置是否使用图形介面。去除前面#，仅使用控制台终端，不使用图形介面
+		GRUB_GFXMODE=640x480  #设定图形介面分辨率
+		GRUB_DISABLE_LINUX_RECOVERY="true" #设定是否创建修复模式菜单项
+		
+	/etc/grub.d/*
+	
+		在脚本文件中找到
+			cat << EOF
+				********
+				********
+				********
+			EOF
+		
+		这类语句，EOF中间的文本会直接写入grub.cfg中相应位置，所以个性化的语句添加在这地方就可以了。
+		
+	================================================================================
+	
+	修改脚本后
+	
+		#update-grub  各个脚本的个性化全部都写入到/boot/grub/grub.cfg
+
+	
+
+	
+六.相关命令
+
+	a.grub-install /dev/sda
+   
+	(1) 安装grub到设备中，如果需要会创建/boot/grub目录
+	(2) 他会把*.mod、*.lst、*.img从 /usr/lib/grub/i386-pc/ 目录复制到/boot/grub目录下，他会覆盖已有文件
+	(3) 然后会调用grub_probe扫描计算机并收集磁盘和分区信息
+	(4) 接着调用grub_mkimage构建一个新的new.img
+	(5) 最后调用grub_setup把grub的boot.img写入MBR中，把core.img写进设备的第一个扇区。
+	
+	
+	 b.update-grub
+     
+	 update-grub主要是在每次配置文件有更新后生成新的grub.cfg，其实update-grub是调用grub-mkconfig，
+	 
+在系统中还有一个update-grub2，发现他是调用update-grub
+     
+	 c.grub-mkconfig  -o /boot/grub/grub.cfg
+     
+	 调用grub-mkdevicemap和grub-probe生成grub.cfg
+    
+	 d.grub-set-default 0
+     
+	 设置在下次进入系统时从哪个内核选项进去
+     
+	 
+
+
+
+	
