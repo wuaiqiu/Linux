@@ -1,0 +1,49 @@
+							systemd-networkd
+							
+							
+1.简介
+
+		在很多 Linux 发行版中，NetworkManager 仍然作为默认的网络配置管理器。和 NetworkManager 相比，
+		
+systemd-networkd 仍处于积极的开发状态，还缺少一些功能。例如，它还不能像 NetworkManager 那样能让你的
+
+计算机在任何时候通过多种接口保持连接。它还没有为更高层面的脚本编程提供 ifup/ifdown 钩子函数。但是，
+
+systemd-networkd 和其它 systemd 组件(例如用于域名解析的 resolved、NTP 的timesyncd，用于命名的 udevd)
+
+结合的非常好。随着时间增长，systemd-networkd只会在 systemd 环境中扮演越来越重要的角色。
+
+
+2.启动system-networkd
+
+	 (1)systemctl enable systemd-networkd		#建立开机自启
+	 
+	 (2)systemctl enable systemd-resolved 		#systemd-networkd用它来进行域名解析。该服务还实现了
+											     一个缓存式 DNS 服务器。
+											
+	 (3)systemctl start systemd-resolved		#启动system-resolved
+	 
+	 (4)rm /etc/resolv.conf										
+	 ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
+	 #当system-resolved启动后，systemd-resolved 就会在 /run/systemd 目录下某个地方创建它自己的
+	 resolv.conf。但是，把 DNS 解析信息存放在 /etc/resolv.conf 是更普遍的做法，很多应用程序也会
+	 依赖于/etc/resolv.conf。因此为了兼容性，按照下面的方式创建一个到 /etc/resolv.conf 的符号链接。
+	
+	 (5)配置文件，systemd-networkd 会按照字母顺序一个个加载并处理
+	 /etc/systemd/networkd/*.network
+	 
+		a.配置 DHCP 网络(/etc/systemd/networkd/10-dhcp.network)
+			[Match] 	#配置哪个(些)网络设备
+			Name=enp33
+			[Network]	
+			DHCP=yes
+			
+		b.静态 IP网络(/etc/systemd/networkd/11-static.network)
+			[Match]
+			Name=enp33
+			[Network]
+			Address=192.168.10.50/24
+			Gateway=192.168.10.1
+			DNS=8.8.8.8
+			
+	  (6)systemctl start systemd-networkd  #开启服务
