@@ -1,0 +1,106 @@
+								iproute2
+
+
+
+								
+1.网络接口设备命名
+
+
+	udev 负责给设备命名。Systemd v197 引入了可预测的网络接口名称自动给网络设备分配静态名称，网络
+	
+接口现在是以前缀 en（以太网）、wl（WLAN）、或者 ww（WWAN）附上一个自动生成的标识符，产生了一个类似
+
+于 enp0s25 的条目。
+
+
+
+2.简介
+
+
+	iproute2是linux下管理控制TCP/IP网络和流量控制的新一代工具包，旨在替代老派的工具链net-tools，
+	
+即大家比较熟悉的ifconfig，arp，route，netstat等命令。要说这两套工具本质的区别，应该是net-tools
+
+是通过procfs(/proc)和ioctl系统调用去访问和改变内核网络配置，而iproute2则通过netlink套接字接口与
+
+内核通讯。
+
+	值得注意的是，可以使用iproute2给同一个接口分配多个IP地址，ifconfig则无法这么做，net-tools和
+	
+iproute2都允许用户为一个接口添加多个IPv6地址。
+
+
+3.命令
+
+	(1)ip link 网络设备配置命令，如可以启用/禁用1某个网络设备,改变mtu及mac地址等
+	
+	(2)ip addr 用于管理某个网络设备与协议(IP/IPv6)有关地址
+	
+	(3)ip route 管理路由
+	
+	(4)ip rule 管理路由策略数据库
+	
+	(5)ip neigh	用于neighbor/arp表管理
+	
+	(6)ip monitor 状态监控
+	
+	
+4.与net-tools对比
+
+	============================网络配置=========================================
+	
+	ifconfig -a				|	ip link show					|	显示所有网络接口
+
+	ifconfig eth1			|	ip addr show dev eth1			|	查看某个指定网络接口的IPv4地址
+	
+	ifconfig eth1 up/down	|	ip link set up/down eth1		|	激活或停用网络接口
+	
+	ifconfig eth1 10.0.0.1/24|	ip addr add 10.0.0.1/24 dev eth1|	为网络接口分配IPv4地址
+	
+	ifconfig eth1 0			|	ip addr del 10.0.0.1/24 dev eth1|	移除网络接口的IPv4地址
+	
+	ifconfig eth1 inet6 add |	ip -6 addr add 					|	为网络接口分配IPv6地址
+	2002:0db5:0:f102::1/64	|	2002:0db5:0:f102::1/64 dev eth1	|
+	
+	ifconfig eth1 inet6 del	|	ip -6 addr del 					|	移除网络设备的IPv6地址
+	2002:0db5:0:f102::1/64	|	2002:0db5:0:f102::1/64 dev eth1	|
+	 
+	ifconfig eth1 hw ether	|	ip link set dev eth1 address 	|	改变网络接口的MAC地址
+	08:00:27:75:2a:66		|	08:00:27:75:2a:67				|
+	
+	
+	===========================路由配置=============================================
+	
+	route -n				|	ip route show					|	查看IP路由表
+	
+	route add default gw 	|	ip route add default via 		|	添加默认路由
+	192.168.1.2 eth0		|	192.168.1.2 dev eth0			|
+	
+	route del default gw	|	ip route replace default via 	|	修改默认路由
+	192.168.1.1 eth0		|	192.168.1.2 dev eth0			|
+	
+	
+	route add -net 			|	ip route add 172.16.32.0/24 	|	添加路由
+	172.16.32.0/24 gw 		|	via 192.168.1.1 dev eth0		|
+	192.168.1.1 dev eth0	|									|	
+	
+	route del -net 			|	ip route del 172.16.32.0/24 	|	删除路由
+	172.16.32.0/24			|
+		  
+	==========================套接字管理========================================
+	
+	
+	netstat -tunpl			|	ss -tunpl						|	查看套接字统计信息
+	
+	
+	==========================ARP管理=========================================	
+	 
+	arp -an					|	ip neigh						|	查看ARP表		
+	
+	arp -s 192.168.1.100 	|	ip neigh add 192.168.1.100 lladdr|	添加静态ARP项
+	00:0c:29:c0:5a:ef 		|	00:0c:29:c0:5a:ef dev eth0		|
+	
+	arp -d 192.168.1.100	|	ip neigh del 192.168.1.100 		|	删除静态ARP项
+							|	dev eth0
+							
+							
