@@ -47,3 +47,11 @@ systemd-networkd 和其它 systemd 组件(例如用于域名解析的 resolved�
 			DNS=8.8.8.8
 			
 	  (6)systemctl start systemd-networkd  #开启服务
+	  
+	  
+3.在启用无线时
+
+	(1).systemctl enabled wpa_supplicant@wls35u1	#开机自启wpa_supplicant@wls35u1服务
+	
+	(2).mv /etc/wpa_supplicant/wpa_supplicant.conf  /etc/wpa_supplicant/wpa_supplicant-wls35u1.conf 
+		#进行改名，wpa_supplicant会读取它
