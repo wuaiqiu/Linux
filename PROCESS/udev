@@ -1,0 +1,105 @@
+								udev
+							
+							
+1.简介
+
+	
+	在Linux早期，设备文件仅仅是是一些带有适当的属性集的普通文件，它由mknod命令创建，文件存放在
+	
+/dev目录下。后来，采用了devfs, 一个基于内核的动态设备文件系统，他首次出现在2.3.46内核中。Mandrake，
+
+Gentoo等Linux分发版本采用了这种方式。devfs创建的设备文件是动态的。但是devfs有一些严重的限制(命名
+
+不够灵活,消耗大量的内存)，从2.6.13版本后移走了。目前取代他的便是文本要提到的udev－－一个用户空间程序。
+
+
+
+2.udev配置文件(/etc/udev/udev.conf)
+
+		udev_root=“/dev/”
+		udev_rules=“/etc/udev/rules.d/”		#udev规则目录
+		udev_log=“err“						#udev的日志信息
+		
+		
+	=================================================================================
+	
+		/etc/udev/rules.d/*.rules
+		
+					key=value
+		
+		
+		
+		(1)常用udev键
+		
+			ACTION              #事件 (uevent) 的行为，例如：add( 添加设备 )、remove( 删除设备 )。
+			KERNEL              #在内核里看到的设备名字，比如sd*表示任意SCSI磁盘设备
+			DEVPATH             #指一个设备在 sysfs文件系统 (/sys)下的相对路径，
+			SUBSYSTEM           #子系统名字，例如：sda 的子系统为 block。
+			BUS                 #总线的名字，比如IDE,USB
+			DRIVER              #设备驱动的名字，比如ide-cdrom
+			ID                  #独立于内核名字的设备名字
+			SYSFS{ value}       #sysfs属性值，他可以表示任意
+			ENV{ key}           #环境变量，可以表示任意
+			PROGRAM             #可执行的外部程序，如果程序返回0值，该键则认为为真(true)
+			RESULT              #上一个PROGRAM调用返回的标准输出。
+			NAME                #根据这个规则创建的设备文件的文件名。注意：仅仅第一行的NAME描述是
+								有效的，后面的均忽略。 如果你想使用使用两个以上的名字来访问一个设
+								备的话，可以考虑SYMLINK键。
+			SYMLINK             #根据规则创建的字符连接名
+			OWNER               #设备文件的属组
+			GROUP               #设备文件所在的组。
+			MODE                #设备文件的权限，采用8进制
+			RUN                 #为设备而执行的程序列表
+			LABEL               #在配置文件里为内部控制而采用的名字标签(下下面的GOTO服务)
+			GOTO                #跳到匹配的规则（通过LABEL来标识），有点类似程序语言中的GOTO
+			IMPORT{ type}       #导入一个文件或者一个程序执行后而生成的规则集到当前文件
+			WAIT_FOR_SYSFS      #等待一个特定的设备文件的创建。主要是用作时序和依赖问题。
+			PTIONS              #特定的选项： last_rule 对这类设备终端规则执行； ignore_device 忽略
+								当前规则； ignore_remove 忽略接下来的并移走请求。all_partitions 为所
+								有的磁盘分区创建设备文件。
+								
+								
+			
+			
+								
+			(2)操作符
+			
+				操作符        匹配或赋值                   解释
+			－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
+				==             	匹配                   相等比较
+				!=              匹配                   不等比较
+				=               赋值                   分配一个特定的值给该键，他可以覆盖之前的赋值。
+				+=              赋值                   追加特定的值给已经存在的键
+				:=              赋值                   分配一个特定的值给该键，后面的规则不可能覆盖它。
+		
+		
+		
+			(3)常用value值
+			
+				
+				$kernel, %k：设备的内核设备名称，例如：sda、cdrom。
+				$number, %n：设备的内核号码，例如：sda3 的内核号码是 3。
+				$devpath, %p：设备的 devpath路径。
+				$id, %b：设备在 devpath里的 ID 号。
+				$sysfs{file}, %s{file}：设备的 sysfs里 file 的内容。其实就是设备的属性值。
+								例如：$sysfs{size} 表示该设备 ( 磁盘 ) 的大小。
+				$env{key}, %E{key}：一个环境变量的值。
+				$major, %M：设备的 major 号。
+				$minor %m：设备的 minor 号。
+				$result, %c：PROGRAM 返回的结果。
+				$parent, %P：父设备的设备文件名。
+				$root, %r：udev_root的值，默认是 /dev/。
+				$tempnode, %N：临时设备名。
+				%%：符号 % 本身。
+				$$：符号 $ 本身。
+	
+	
+				
+4.查看相关属性
+
+		(1)udevinfo -a -p /block/sda 
+		
+		(2)查询sysfs文件系统
+				
+				cat /sys/block/sda/
+		
