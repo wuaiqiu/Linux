@@ -1,0 +1,307 @@
+							dns
+
+
+							
+							
+1.简介
+
+	
+	(1)缓存域名服务器(高速缓存服务器)
+
+		通过向其他域名服务器查询获得域名->IP地址记录,将域名查询结果缓存到本地，提高重复查询时
+		
+	的速度
+
+	(2)主域名服务器
+
+	特定DNS区域的官方服务器，具有唯一性,负责维护该区域内所有域名->IP地址的映射记录
+
+	(3)从域名服务器（辅助域名服务器）
+
+	其维护的 域名->IP地址记录 来源于主域名服务器
+
+
+	
+
+2.相关软件包
+
+		bind，提供了域名服务的主要程序及相关文件
+
+		bind-utils，提供了对DNS服务器的测试工具程序（如nslookup、dig等）
+
+		bind-chroot，为bind提供一个伪装的根目录以增强安全性（将“/var/named/chroot/”文件夹作为BIND
+		
+	的根目录）【此时所有的配置文件属组为named】
+
+		caching-nameserver，为配置BIND作为缓存域名服务器提供必要的默认配置文件，这些文件在配置
+		
+	主、从域名服务器时也可以作为参考
+
+===========================================================================================
+	
+	named默认监听TCP、UDP协议的53端口，以及TCP的953端口：
+
+		其中UDP 53端口一般对所有客户机开放，以提供解析服务；TCP 53端口一般只对特定从域名服务器开放，
+		
+提高解析记录传输通道；TCP 953端口默认只对本机（127.0.0.1）开放，用于为rndc远程管理工具提供控制通道
+
+
+
+
+3.主配置文件
+
+
+	/etc/named.conf
+	
+	======================================================================
+	
+	recursion yes;    #表示为所有用户提供递归，默认递归是开启的
+	
+	#我们可以去掉该选项，设置为谁递归，如可添加下面一行信息：
+	
+	options {
+		directory "/var/named";    
+		allow-recursion { 172.16.0.0/16; };   #表示只给该网段的用户提供递归
+	};
+
+
+	===================================================================
+	
+	#同样，我们还可以设置允许为谁查询，如我们添加添加下面一行信息：
+	
+	options {
+		
+		directory "/var/named";  
+		allow-query { 172.16.0.0/24; };  #表示仅给该网段的用户提供查询请求
+	};
+	在实际的网络中，我们一般很少使用该选项。因为你只允许某些用户来查询，其他用户查
+	询不了，就没法访问了。
+	====================================================================
+	
+	#在主从dns服务器传输时是否允许该主机传送,可以避免外界dig查询
+	
+	options {
+		directory "/var/named";
+		allow-transfer { 172.16.32.10; };      
+	};
+	
+	
+	=========================================================
+	
+	
+	options {
+		directory "/var/named";
+		allow-recursion { 172.16.0.0/16; };
+		notify yes;         #添加该行，表示有修改时通知从服务器
+	};
+
+
+	
+4.配置dns1主服务器
+
+
+	(1)区域配置文件
+	
+	
+	/etc/named.rfc1912.zones
+	
+
+	zone "wu.com" IN {                #本地正解定义  
+    
+		type master;                  #类型为master  
+		file "wu.com.zone";           #正解文件名 所在目录为：/var/named/   
+		allow-update{none;};		  #不允许动态更新，用于DDNS
+	
+	};  
+  
+	
+	zone "137.168.192.in-addr.arpa" IN {      #本地反解定义  
+    
+		type master;   
+		file "192.168.137.zone";     			#反解文件名  
+		allow-update{none;};
+		
+	};  
+	
+	
+	(2)创建2个解析文件(@表示当前域名)
+	
+		1)/var/named目录下创建正向解析文件： wu.com.zone
+
+			$TTL 86400  #默认的ttl值   
+
+			@            IN      SOA     dns1.wu.com.  root.mail.wu.com.(	#主DNS服务器,@表示wu.com.)    
+                          2013031601      #序列号 
+                          1H          	  #刷新时间
+                          10M 		      #重试时间间隔  
+                          7D 	          #过期时间
+                          1D 	          #否定答案ttl值
+                           )  
+  
+						 IN      NS      dns1.wu.com.    #当前域的DNS服务器,域名与第一行相同时可不写，
+														表示直接继承上一行的区域名 
+						 IN		 MX	10	 mail.wu.com.	#当前域的DNS服务器的交换邮箱
+
+			dns1	  	  IN      A       192.168.137.200
+			mail          IN	  A		  192.168.137.200
+			www		      IN	  A		  192.168.137.201	 
+			
+
+		 2）/var/named目录下创建反向解析文件： 192.168.137.zone
+			
+
+			@            IN      SOA    dns1.wu.com.  root.mail.wu.com.(#主DNS服务器,@表示137.168.192.in-addr.arpa.    
+                          2013031601      #序列号 
+                          1H          	  #刷新时间
+                          10M 		      #重试时间间隔  
+                          7D 	          #过期时间
+                          1D 	          #否定答案ttl值
+                           )  
+  
+							  IN      NS      	 dns1.wu.com.    
+							  IN	  MX	 10	 mail.wu.com.	
+				200      	  IN      PTR     	 dns1.wu.com.      
+				201		      IN	  PTR	  	 www.wu.com.
+				200			  IN      PTR     	 mail.wu.com.
+				
+				
+=============================================================================
+	
+	检查named.conf文件语法：
+			
+			named-checkconf 
+	
+	检查区域配置文件语法：
+			
+			named-checkzone  zonename  [filename] 
+			
+
+
+=============================================================================
+			
+
+			
+	
+5.配置dns2从服务器
+
+		
+	/etc/named.rfc1912.zones
+	
+
+	zone "wu.com" IN {                #本地正解定义  
+    
+		type slave;                  #类型为master  
+		file "slave/wu.com.zone";           #正解文件名 所在目录为：/var/named/  
+		master{192.168.137.200;};  
+	
+	};  
+  
+	
+	zone "137.168.192.in-addr.arpa" IN {      #本地反解定义  
+    
+		type slave;   
+		file "slave/192.168.137.zone";     			#反解文件名  
+		master{192.168.137.200;};
+	
+	};  
+
+	======================================================================================
+	
+		#在dns1服务器上编辑/etc/named.rfc1912.zones文件,在区域wu.com与137.168.192.in-addr.arpr的配置
+		中添加以下内容,用于支持区域传送
+
+		allow-transfer { 192.168.137.201; };
+
+		#在dns1服务器上的wu.com.zone配置文件中把dns2添加为DNS服务器
+
+		@        IN  NS  dns2.wu.com.
+
+		dns2    IN 	A    192.168.137.201
+		
+		#在dns1服务器上的192.168.137.zone配置文件中把dns2添加为DNS服务器
+
+		@		IN		NS dns2.wu.com.
+		
+		201 	IN 		A  dns2.wu.com.
+		
+
+		
+
+			
+6.dig
+
+	dig  @dnsserver  name  querytype
+	
+	dnsserver:如果你设置的dnsserver是一个域名，表示指定通过其后边的主机来查询.
+
+	name:查询的域名
+	
+	querytype:A/AAAA/PTR/MX/ANY/AXFR/IXFR等值
+
+	
+		-t选项，用来设置查询类型，默认情况下是A，也可以设置MX,AXFR,IXFR等类型
+		-x选项，是逆向查询选项。
+		+trace，当使用这个查询选项后，dig会从根域查询一直跟踪直到查询到最终结果
+		+recurse，表示让dns递归查询
+		+norecurse，表示不让dns递归查询
+		
+		
+
+7.rndc
+
+	rndc（Remote Name Domain Controllerr）是一个远程管理bind的工具，通过这个工具可以在本地或者
+	
+远程了解当前服务器的运行状况，也可以对服务器进行关闭、重载、刷新缓存、增加删除zone等操作。 
+
+	
+	rndc常用命令：
+	
+		status 				#显示bind服务器的工作状态
+	
+		reload 				#重新加载配置文件和区域文件
+
+		reload zone_name 	#重新加载指定区域
+
+		querylog   			#关闭或开启查询日志
+	
+		dumpdb 				#将高速缓存转储到转储文件 (named_dump.db)
+		
+		flush 			    #刷新服务器的所有高速缓存
+		
+		stop   				#将暂挂更新保存到主文件并停止服务器
+		
+		trace LEVEL   		#指定 debug 的级别, trace 0 表示关闭debug（正常情况下建议关闭）
+		
+	
+=================================================================================
+	rm -rf rndc.key
+	
+	rndc-confgen >/etc/rndc.conf	#生成/etc/rndc.conf文件
+	
+		在/etc/named.conf中添加rndc.conf提示的内容
+			key "rndc-key" {
+				algorithm hmac-md5;
+      		 	secret "2Nr9iRs9QTJSWdxw0UnfHA==";
+			};
+
+			controls {
+				inet 192.168.137.200 port 953
+				allow { any; } keys { "rndc-key"; };
+			};
+		
+	远程连接(远程主机需要有rndc.conf)
+	rndc.conf
+	
+		key "rndc-key" {
+			algorithm hmac-md5;
+			secret "2Nr9iRs9QTJSWdxw0UnfHA==";
+		};
+
+		options {
+			default-key "rndc-key";
+			default-server 192.168.137.200; //修改为要控制的dns服务器ip
+			default-port 953;
+		};
+		
+		rndc –s 192.168.137.200 status
+	
