@@ -1,0 +1,89 @@
+							dpkg制作deb包
+							
+							
+							
+1.步骤
+
+(1)要求
+mydeb
+|----DEBIAN
+       |-------control
+               |-------postinst
+       |-------postrm
+|----boot
+       |----- initrd-vstools.img
+
+	   
+(2)步骤
+
+	a.在任意目录下创建如上所示的目录以及文件
+	
+		# mkdir   -p /root/mydeb                          # 在该目录下存放生成deb包的文件以及目录
+		# mkdir -p /root/mydeb/DEBIAN           #目录名必须大写
+		# mkdir -p /root/mydeb/boot                   # 将文件安装到/boot目录下
+		# touch /root/mydeb/DEBIAN/control    # 必须要有该文件
+		# touch /root/mydeb/DEBIAN/postinst # 软件安装完后，执行该Shell脚本
+		# touch /root/mydeb/DEBIAN/postrm    # 软件卸载后，执行该Shell脚本
+		# touch /root/mydeb/boot/initrd-vstools.img    # 所谓的“软件”程序，这里就只是一个空文件
+		
+		
+	b.control文件内容：
+	
+		Package: my-deb   （软件名称，中间不能有空格）
+		Version: 1                  (软件版本)
+		Section: utils            （软件类别）
+		Priority: optional        （软件对于系统的重要程度）
+		Architecture: amd64   （软件所支持的平台架构）
+		Maintainer: xxxxxx <> （打包人和联系方式）
+		Description: my first deb （对软件所的描述）
+	
+	c.postinst文件内容（ 软件安装完后，执行该Shell脚本，一般用来配置软件执行环境，必须以“#!/bin/sh”
+	
+为首行，然后给该脚本赋予可执行权限：chmod +x postinst）：
+
+
+		#!/bin/sh
+		
+			echo "my deb" > /root/mydeb.log
+			
+			
+	d.postrm文件内容（ 软件卸载后，执行该Shell脚本，一般作为清理收尾工作，必须以“#!/bin/sh”为首行，
+	
+然后给该脚本赋予可执行权限：chmod +x postrm）：
+		
+		#!/bin/sh
+		
+			rm -rf /root/mydeb.log
+			
+			
+	e.给mydeb目录打包：
+		
+		# dpkg -b   mydeb   mydeb-1.deb      # 第一个参数为将要打包的目录名，
+                                             # 第二个参数为生成包的名称。
+
+
+	f.安装deb包：
+
+		# dpkg -i   mydeb-1.deb      # 将initrd-vstools.img复制到/boot目录下后，执行postinst，
+                                     # postinst脚本在/root目录下生成一个含有"my deb"字符的mydeb.log
+									 文件
+
+	g.卸载deb包：
+	
+		# dpkg -r   my-deb      # 这里要卸载的包名为control文件Package字段所定义的 my-deb 。
+                                # 将/boot目录下initrd-vstools.img删除后，执行posrm，
+                                # postrm脚本将/root目录下的mydeb.log文件删除
+
+	h.解压deb包中所要安装的文件
+	
+		# dpkg -x   mydeb-1.deb   mydeb-1    # 第一个参数为所要解压的deb包，这里为 mydeb-1.deb
+                                             # 第二个参数为将deb包解压到指定的目录，这里为 mydeb-1
+
+	i.解压deb包中DEBIAN目录下的文件（至少包含control文件）
+
+		# dpkg -e   mydeb-1.deb   mydeb-1/DEBIAN    # 第一个参数为所要解压的deb包，
+                                                    # 这里为 mydeb-1.deb
+                                                    # 第二个参数为将deb包解压到指定的目录，
+                                                    # 这里为 mydeb-1/DEBIAN
+	
+	
