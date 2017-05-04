@@ -1,0 +1,124 @@
+						rpmPackage
+						
+						
+1.步骤
+
+	(1)
+	
+	(2)步骤
+	
+		a.确定topdir目录(rpm的制作目录,这个需要在宏配置文件中指定，这个配置文件称为macrofiles，它们
+		
+通常为 /usr/lib/rpm/macros)
+
+			rpmbuild --showrc | grep topdir 	#查看你系统默认的工作车间 
+			
+		b.在topdir下建立需要的目录
+		
+			
+			cd ~/rpmbuild  
+
+			mkdir -pv {BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS} 
+			
+		-----------------------------------------------------------------------------
+		
+			BUILD	源代码解压后的存放目录
+			RPMS    制作完成后的RPM包存放目录，里面有与平台相关的子目录
+			SOURCES 收集的源材料，补丁的存放位置
+			SPECS   SPEC文件存放目录
+			SRMPS   存放SRMPS生成的目录
+		----------------------------------------------------------------------------
+		
+		c.把收集的源码放到SOURCES下
+		
+			cp /tmp/tengine-1.4.2.tar.gz SOURCES   ##事先放好的
+			
+		d.在SPECS下建立重要的spec文件
+		
+			cd SPECS 
+			
+			vi tengine.spec
+			
+			
+		-----------------------------------------------------------------------
+			
+			%define nginx_user nginx       #这是我们自定义了一个宏，名字为nginx_user值为
+											nginx，%{nginx_user}引用 
+ 
+			### 1.The introduction section ###介绍区域段 
+ 
+			Name:           tengine            #名字为tar包的名字 
+			Version:        1.4.2              #版本号，一定要与tar包的一致哦 
+			Release:        1%{?dist}          #释出号，也就是第几次制作rpm 
+			Summary:        tengine from TaoBao  #软件包简介，最好不要超过50字符 
+			Group:          System Environment/Daemons  #组名，可以通过less /usr/share/doc/rpm-4.8.0/GROUPS 选择合适组 
+			License:        GPLv2                       #许可，GPL还是BSD等  
+			URL:            http://laoguang.blog.51cto.com   #可以写一个网址 
+			Packager:       Laoguang <ibuler@qq.com> 
+			Vendor:         TaoBao.com 
+			Source0:        %{name}-%{version}.tar.gz   
+			BuildRequires:  gcc,make                           #制作过程中用到的软件包 
+			Requires:       pcre,pcre-devel,openssl,chkconfig  #软件运行需要的软件包，也可以指定最低
+															版本如 bash >= 1.1.1 
+			%description                                       #软件包描述，尽情的写吧 
+					It is a Nginx from Taobao.                         #描述内容 
+ 
+			###  2.The Prep section ####准备阶段,主要目的解压source并cd进去 
+ 
+			%prep                                              #这个宏开始 
+			%setup -q                                          #这个宏的作用静默模式解压并cd 
+			 
+ 
+			###  3.The Build Section 编译制作阶段，主要目的就是编译 
+			
+			%build 
+			./configure \                                      #./configure 也可以用%configure来替换 
+			--prefix=/usr \                                  
+			--sbin-path=/usr/sbin/nginx \ 
+			--conf-path=/etc/nginx/nginx.conf \ 
+			--error-log-path=/var/log/nginx/error.log \ 
+			--http-log-path=/var/log/nginx/access.log \ 
+			--pid-path=/var/run/nginx/nginx.pid  \ 
+			--lock-path=/var/lock/nginx.lock \ 
+			
+			make %{?_smp_mflags}          #make后面的意思是：如果就多处理器的话make时并行编译 
+ 
+			###  3.2.Install section ###安装阶段 
+			
+			%install                                
+			
+			rm -rf %{buildroot}                #先删除原来的安装的，如果你不是第一次安装的话 
+			make install DESTDIR=%{buildroot} 
+				#DESTDIR指定安装的目录，而不是真实的安装目录，%{buildroot}你应该知道是指的什么了 
+ 
+
+			### 4. scripts section ####执行脚本段
+			
+			%pre        #rpm安装前制行的脚本 
+	
+			%post       #安装后执行的脚本 
+ 
+			%preun      #卸载前执行的脚本 
+
+			%postun     #卸载后执行的脚本 
+ 
+			### 5.clean section ###清理段,删除buildroot 
+     
+			### 6.file section ####要包含的文件 
+     
+			### 7.chagelog section ###改变日志段 
+		
+		----------------------------------------------------------------------
+		
+		e.用rpmbuild命令制作rpm包，rpmbuild命令会根据spec文件来生成rpm包
+		
+			rpmbuild -bp		#执行到pre 
+			rpmbuild -bc		#执行到 build段
+			rpmbuild -bi		#执行install段
+			rpmbuild -ba 		#生成二进制rpm 
+			
+		
+			
+		
+			
+	
