@@ -1,0 +1,60 @@
+					Tor
+					
+1.Tor Browser
+	(1)使用VPN翻墙直接连接
+	
+	(2)使用meek网桥连接
+		
+			Tor的客户端需要先向一台服务器获取Tor的节点。GFW(Great Firewall of China)在屏蔽Tor时，会直接
+			
+	屏蔽Tor的这台提供节点的服务器。这也就是Tor无法使用的原因。现在Tor Browser内置的meek流量混淆插件可以
+	
+	很好地解决这一问题.外国有很多云计算平台。如亚马逊的AWS，微软的azure等。封掉这些平台对于不少跨国企业
+	
+	来说会造成相当大的损失，导致GFW根本不敢封。meek插件可以将Tor的连接伪装成访问云服务的连接，从而混过
+	
+	GFW.在混过GFW之后,同传统的 Tor 连接方式,到达目标服务器。
+	
+			使用meek网桥的速度通常要比直接连接（或者通过前置代理连接）要慢一些。
+
+		
+	(3)使用前置代理
+	
+		在使用meek的基础上选择本地代理（Shadowsocks的vpn翻墙工具）
+		
+
+2.Tor配置
+
+	pacman -S  proxychains-ng
+	pacman -S  tor
+	 
+	设置/etc/proxychains.conf
+	
+	socks5  172.0.0.1:9050
+	
+	systemctl start tor
+	systemctl enable tor
+	
+	proxychains shodan myip
+	
+	
+3.proxychains
+
+	dynamic_chain		按照列表中出现的代理服务器的先后顺序组成一条链,如果有代理服务器失效，则
+						自动将其排除，但至少要有一个是有效的.默认未开启
+	
+	strict_chain		按照后面列表中出现的代理服务器的先后顺序组成一条链,要求所有的代理服务器都
+						是有效的.默认开启
+
+	random_chain		列表中的任何一个代理服务器都可能被选择使用,这种方式很适合网络扫描操作(参数
+						chain_len只对random_chain有效).	默认未开启
+
+	proxy_dns			代理dns请求	默认开启
+	
+	localnet 192.168.0.0/24 对此不进行代理
+	
+	ProxyList			添加代理列表,如http、socks4/5、auth user/pass
+	socks5	192.168.1.2	1080	test	123456
+	
+	
+	
