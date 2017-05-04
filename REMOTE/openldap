@@ -1,0 +1,60 @@
+							openLDAP
+							
+		
+1.安装(OpenLDAP 软件包同时包含了服务器和客户端)
+	
+	pacman -S openldap
+	
+	服务端配置文件(/etc/openldap/slapd.conf)
+		suffix			"dc=baidu,dc=com"				#指定后缀（即指定根节点）
+		rootdn			"cn=root,dc=baidu,dc=com"		#设置超级管理员的名称
+		rootpw			 secret							#设置超级管理员的密码(slappasswd)
+
+		
+2.命令（tcp/389）
+
+===============================================================================
+
+添加操作（ldapadd）
+	  
+	  ldappadd  选项  LDIF文件 
+	  
+			-x：进行简单认证（不需要sasl加密）。
+			-D：用来绑定服务器rootdn			
+			-h：目录服务的IP地址
+			-w：绑定dn的密码
+			-W: 输入密码
+			-f：使用LDIF文件进行条目添加的文件
+			
+	ldapadd -x -D "cn=root,dc=baidu,dc=com" -w secret -f sina.ldif
+	
+
+=================================================================================
+	
+查询操作（ldapsearch）
+	
+	  ldapsearch  选项  过滤
+	  
+			 -x：进行简单认证。
+			 -D：用来绑定服务器的rootdn。
+			 -w：绑定dn的密码。
+			 -W: 输入密码。
+			 -b：指定要查询的dn条目。
+			 -h：服务器的ip地址。
+			 
+	ldapsearch -x -b "dc=sina,dc=com"  
+	
+=============================================================================
+
+删除操作(ldapdelete，不能删除根节点)
+	
+		ldapdelete 选项  过滤  属性值
+		
+			-x：进行简单认证。
+			-D：用来绑定服务器的dn。
+			-h：目录服务的地址。
+			-w：绑定dn的密码。
+			-W: 输入密码
+			-f：使用LDIF文件进行条目添加的文件
+			
+	ldapdelete -x -D "cn=root,dc=baidu,dc=com" -w secret "cn=test,ou=managers,dc=baidu,dc=com"  
