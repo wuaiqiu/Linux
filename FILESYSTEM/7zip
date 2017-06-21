@@ -1,0 +1,30 @@
+			zip
+
+1.安装
+
+	pacman -S p7zip
+
+2.使用
+
+	7z  a  c.7z  a.txt  b.txt  	#压缩a.txt和b.txt
+	
+	7z  l  c.7z		   			#列出c.7z的内容
+	
+	7z  x  c.7z  -o/home/www   	#解压缩到c.7z到/home/www (-o表示压缩目录，与目录之间没有空格
+	
+	7z  d  c.7z  a.txt         	#从压缩文件中删除a.txt
+
+	7z  u  c.7z  c.txt        	#更新压缩文件
+
+
+3.rar文件
+
+	pacman -S rar
+
+	rar x aa.rar 		 	#解压文件
+
+	rar aa.rar /home/wu/aa  #压缩文件
+
+	rar a  aa.rar  a.file1  #添加文件到aa.rar
+
+	rar d  aa.rar  a.file1  #删除文件
