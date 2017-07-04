@@ -1,0 +1,40 @@
+								cmake
+
+1.简介
+
+	
+	CMake(cross platform make)是一个跨平台的安装(编译)工具,可以用简单的语句来描述所有平台的安装
+	
+(编译过程)，Cmake 并不直接建构出最终的软件，而是产生标准的建构档（如 Unix 的 Makefile），然后再
+
+依一般的建构方式使用
+
+
+2.cmake
+	
+	
+	cmake libssh-0.7-1				#默认编译
+	cmake -i libssh-0.7-1			#进入交互式操作
+	
+
+3.CMakeList.txt
+
+	cmake的运行源文件
+	
+	
+4.CMakeCache.txt
+
+	cmake第一次运行的时候，它将产生一个文件叫CMakeCache.txt，该文件可以被看作一个配置文件，
+	
+它里面的内容就像传递给configure命令的参数集,当重新编译需要删除
+
+
+5.实例
+
+	tar -zxf libssh.tar.gz
+	cd  libssh
+	mkdir build
+	cd build
+	cmake ..
+	make
+	make install
