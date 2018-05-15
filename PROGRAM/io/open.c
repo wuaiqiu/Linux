@@ -10,11 +10,11 @@
  * 函数，直接系统调用
  *
  *	  int creat(char* pathname,mode_t mode):创建文件并设置权限
- *	  int open(char* pathname,int flags):打开文件,并使用指定权限访问
- *	  int open(char* pathname,int flags,mode_t mode):创建文件,并使用
+ *	  int open(char* pathname,int flags):打开或创建文件,并使用指定权限访问
+ *	  int open(char* pathname,int flags,mode_t mode):打开或创建文件,并使用
  *	  指定权限访问,并指定新增文件权限
- *	  ssize_t read(int fd,void* buf,size_t count):读取文件
- *	  ssize_t write(int fd,void* buf,size_t count):写入文件,count与buf需要相同的字数
+ *	  ssize_t read(int fd,void* buf,size_t count):读取文件，STDIN_FILENO为控制台输入流
+ *	  ssize_t write(int fd,void* buf,size_t count):写入文件,count与buf需要相同的字数，STDOUT_FILENO为控制台输出流
  *	  _off_t lseek(int fd,_off_t offset ,int whence):移动读/写指针offset个字节
  *	  int close(int fd):关闭文件
  * */
